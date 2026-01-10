@@ -80,3 +80,29 @@ CMakeLists.txt.user*
 .rcc/
 .uic/
 /build*/
+# Documentation and setup files
+
+
+VSCODE_SETUP.md
+QUICK_REFERENCE.md
+CONFIGURATION_COMPLETE.txt
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+.directory
+
+# Build artifacts
+*.o
+*.obj
+*.so
+*.dll
+*.exe
+*.app
