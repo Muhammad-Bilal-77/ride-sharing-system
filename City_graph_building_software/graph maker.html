@@ -1,0 +1,3194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>City Graph Editor</title>
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.container {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 20px;
+    border-radius: 16px;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.header h1 {
+    font-size: 22px;
+    color: #1f2937;
+}
+
+.stats {
+    display: flex;
+    gap: 12px;
+}
+
+.stat-item {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+}
+
+.stat-item span {
+    font-weight: bold;
+    margin-left: 4px;
+}
+
+.toolbar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.tool-group {
+    display: flex;
+    gap: 4px;
+    background: #f3f4f6;
+    padding: 6px;
+    border-radius: 8px;
+}
+
+.tool-label {
+    font-size: 10px;
+    color: #6b7280;
+    text-transform: uppercase;
+    padding: 0 6px;
+    display: flex;
+    align-items: center;
+}
+
+button {
+    padding: 8px 14px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    background: white;
+    color: #374151;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    transition: all 0.2s;
+}
+
+button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+button.active {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: white;
+}
+
+button.danger {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+}
+
+button.success {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+}
+
+.canvas-wrapper {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+canvas {
+    display: block;
+    background: #fafbfc;
+    cursor: crosshair;
+}
+
+.coords {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background: rgba(0,0,0,0.7);
+    color: #10b981;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 12px;
+}
+
+.mode-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(59, 130, 246, 0.9);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.info-bar {
+    margin-top: 12px;
+    padding: 12px;
+    background: #f0f9ff;
+    border-radius: 8px;
+    border-left: 4px solid #3b82f6;
+    font-size: 13px;
+    color: #475569;
+}
+
+/* Colony Overlay */
+.colony-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.colony-overlay.active {
+    display: flex;
+}
+
+.colony-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    max-width: 95vw;
+    max-height: 95vh;
+    overflow: auto;
+}
+
+.colony-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.colony-header h2 {
+    font-size: 24px;
+    color: #1f2937;
+}
+
+.close-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: #f3f4f6;
+    color: #6b7280;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.close-btn:hover {
+    background: #ef4444;
+    color: white;
+}
+
+.colony-stats {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.colony-stat {
+    flex: 1;
+    background: #f0f9ff;
+    padding: 12px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.colony-stat .val {
+    font-size: 28px;
+    font-weight: bold;
+    color: #1f2937;
+}
+
+.colony-stat .lbl {
+    font-size: 11px;
+    color: #6b7280;
+    text-transform: uppercase;
+}
+
+.colony-canvas-wrap {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.streets-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.street-card {
+    background: #f8fafc;
+    padding: 10px;
+    border-radius: 6px;
+    border-left: 3px solid #10b981;
+}
+
+.street-card .name {
+    font-weight: bold;
+    color: #1f2937;
+    font-size: 13px;
+}
+
+.street-card .detail {
+    font-size: 11px;
+    color: #6b7280;
+}
+</style>
+</head>
+<body>
+
+<!-- Colony Detail Overlay -->
+<div class="colony-overlay" id="colonyOverlay">
+    <div class="colony-card">
+        <div class="colony-header">
+            <h2>🏘️ <span id="colonyName">Colony</span></h2>
+            <div style="display:flex;gap:8px;">
+                <button id="deleteColonyBtn" style="background:#ef4444;color:white;border-radius:8px;padding:8px 16px;border:none;cursor:pointer;">🗑️ Delete Colony</button>
+                <button id="addNeighborFromOverlay" style="background:#8b5cf6;color:white;border-radius:8px;padding:8px 16px;border:none;cursor:pointer;">➡️ Add Neighbor</button>
+                <button class="close-btn" id="closeColonyBtn">✕</button>
+            </div>
+        </div>
+        <div class="colony-stats">
+            <div class="colony-stat">
+                <div class="val" id="cStreets">6</div>
+                <div class="lbl">Streets</div>
+            </div>
+            <div class="colony-stat">
+                <div class="val" id="cNodes">60</div>
+                <div class="lbl">Nodes</div>
+            </div>
+            <div class="colony-stat">
+                <div class="val" id="cLocations">48</div>
+                <div class="lbl">Locations</div>
+            </div>
+            <div class="colony-stat">
+                <div class="val" id="cArea">200×200</div>
+                <div class="lbl">Area (m)</div>
+            </div>
+            <div class="colony-stat">
+                <div class="val" id="cNeighbors">0</div>
+                <div class="lbl">Neighbors</div>
+            </div>
+        </div>
+        <div class="colony-canvas-wrap">
+            <canvas id="colonyCanvas" width="850" height="450"></canvas>
+        </div>
+        <div class="streets-grid" id="streetsList"></div>
+    </div>
+</div>
+
+<!-- Zone Detail Overlay -->
+<div class="colony-overlay" id="zoneOverlay">
+    <div class="colony-card" style="max-width:98vw;">
+        <div class="colony-header">
+            <h2>🏙️ <span id="zoneName">Zone</span></h2>
+            <div style="display:flex;gap:8px;">
+                <button id="deleteZoneBtn" style="background:#ef4444;color:white;border-radius:8px;padding:8px 16px;border:none;cursor:pointer;">🗑️ Delete Zone</button>
+                <button class="close-btn" id="closeZoneBtn">✕</button>
+            </div>
+        </div>
+        <div class="colony-stats">
+            <div class="colony-stat">
+                <div class="val" id="zColonies">21</div>
+                <div class="lbl">Colonies</div>
+            </div>
+            <div class="colony-stat">
+                <div class="val" id="zStreets">126</div>
+                <div class="lbl">Streets</div>
+            </div>
+            <div class="colony-stat">
+                <div class="val" id="zNodes">1260</div>
+                <div class="lbl">Nodes</div>
+            </div>
+            <div class="colony-stat">
+                <div class="val" id="zLocations">1008</div>
+                <div class="lbl">Locations</div>
+            </div>
+        </div>
+        <div class="colony-canvas-wrap">
+            <canvas id="zoneCanvas" width="1200" height="600"></canvas>
+        </div>
+        <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px;" id="zoneColonyList"></div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="header">
+        <h1>🗺️ City Graph Editor</h1>
+        <div class="stats">
+            <div class="stat-item">Nodes:<span id="nodeCount">0</span></div>
+            <div class="stat-item">Edges:<span id="edgeCount">0</span></div>
+            <div class="stat-item">Streets:<span id="streetCount">0</span></div>
+            <div class="stat-item">Colonies:<span id="colonyCount">0</span></div>
+            <div class="stat-item">Locations:<span id="locationCount">0</span></div>
+            <div class="stat-item">Zones:<span id="zoneCount">0</span></div>
+        </div>
+    </div>
+    
+    <div class="toolbar">
+        <div class="tool-group">
+            <span class="tool-label">Tools</span>
+            <button id="nodeBtn" class="active">🔵 Node</button>
+            <button id="streetBtn">🛣️ Street</button>
+            <button id="colonyBtn">🏘️ Colony</button>
+            <button id="neighborBtn">🏘️➡️🏘️ Neighbor</button>
+            <button id="zoneBtn">🏙️ Zone</button>
+        </div>
+        <div class="tool-group">
+            <span class="tool-label">Actions</span>
+            <button id="clearBtn" class="danger">🗑️ Clear</button>
+            <button id="exportBtn" class="success">📥 Export JSON</button>
+            <button id="exportCsvBtn" class="success">📊 Export CSV</button>
+            <button id="exportLocBtn" class="success">🏠 Export Locations</button>
+        </div>
+    </div>
+    
+    <div class="canvas-wrapper">
+        <canvas id="map" width="1100" height="650"></canvas>
+        <div class="coords" id="coords">X: 0m | Y: 0m</div>
+        <div class="mode-badge" id="modeBadge">🔵 Node Mode</div>
+    </div>
+    
+    <div class="info-bar">
+        <strong>💡 Help:</strong> Click to add node • Drag to move • Shift+Click to connect • Right-Click to delete • Click colony icon to expand • Use Neighbor tool to add adjacent colonies
+    </div>
+</div>
+
+<script>
+// Main canvas
+var canvas = document.getElementById("map");
+var ctx = canvas.getContext("2d");
+
+// Colony canvas
+var colonyCanvas = document.getElementById("colonyCanvas");
+var colonyCtx = colonyCanvas.getContext("2d");
+
+// UI elements
+var coordsEl = document.getElementById("coords");
+var modeBadge = document.getElementById("modeBadge");
+var colonyOverlay = document.getElementById("colonyOverlay");
+
+// Buttons
+var nodeBtn = document.getElementById("nodeBtn");
+var streetBtn = document.getElementById("streetBtn");
+var colonyBtn = document.getElementById("colonyBtn");
+var neighborBtn = document.getElementById("neighborBtn");
+var zoneBtn = document.getElementById("zoneBtn");
+var clearBtn = document.getElementById("clearBtn");
+var exportBtn = document.getElementById("exportBtn");
+var exportCsvBtn = document.getElementById("exportCsvBtn");
+var exportLocBtn = document.getElementById("exportLocBtn");
+var closeColonyBtn = document.getElementById("closeColonyBtn");
+var deleteColonyBtn = document.getElementById("deleteColonyBtn");
+var addNeighborFromOverlay = document.getElementById("addNeighborFromOverlay");
+var closeZoneBtn = document.getElementById("closeZoneBtn");
+var deleteZoneBtn = document.getElementById("deleteZoneBtn");
+var zoneOverlay = document.getElementById("zoneOverlay");
+var zoneCanvas = document.getElementById("zoneCanvas");
+var zoneCtx = zoneCanvas.getContext("2d");
+
+// Constants
+var centerX = canvas.width / 2;
+var centerY = canvas.height / 2;
+var SCALE = 5; // 5 meters per pixel
+var NODE_RADIUS = 6;
+
+// State
+var mode = "node";
+var nodes = [];
+var edges = [];
+var streets = [];
+var colonies = [];
+var locations = [];
+var zones = [];
+var zoneConnector = {
+    nodes: [],  // Nodes along Y=0 (x-axis)
+    edges: []   // Edges connecting zone connector nodes
+};
+var zoneConnections = []; // Edges connecting zones to the zone connector
+var draggingNode = null;
+var edgeStartNode = null;
+var selectedColonyForNeighbor = null;
+var currentOpenColony = null;
+var currentOpenZone = null;
+
+// Helper functions
+function toCartesian(x, y) {
+    return {
+        x: Math.round((x - centerX) * SCALE),
+        y: Math.round((centerY - y) * SCALE)
+    };
+}
+
+function calcDistance(a, b) {
+    var A = toCartesian(a.x, a.y);
+    var B = toCartesian(b.x, b.y);
+    return Math.sqrt(Math.pow(B.x - A.x, 2) + Math.pow(B.y - A.y, 2));
+}
+
+function getNodeAt(x, y) {
+    for (var i = 0; i < nodes.length; i++) {
+        var n = nodes[i];
+        var dist = Math.sqrt(Math.pow(n.x - x, 2) + Math.pow(n.y - y, 2));
+        if (dist < NODE_RADIUS + 4) return n;
+    }
+    return null;
+}
+
+function getColonyAt(x, y) {
+    for (var i = 0; i < colonies.length; i++) {
+        var c = colonies[i];
+        var cx = c.bounds.x + c.bounds.w / 2;
+        var cy = c.bounds.y + c.bounds.h / 2;
+        var dist = Math.sqrt(Math.pow(x - cx, 2) + Math.pow(y - cy, 2));
+        if (dist < 35) return c;
+    }
+    return null;
+}
+
+function getEdgeAt(x, y) {
+    for (var i = 0; i < edges.length; i++) {
+        var e = edges[i];
+        var dx = e.b.x - e.a.x;
+        var dy = e.b.y - e.a.y;
+        var len = Math.sqrt(dx * dx + dy * dy);
+        if (len === 0) continue;
+        var t = ((x - e.a.x) * dx + (y - e.a.y) * dy) / (len * len);
+        if (t >= 0 && t <= 1) {
+            var px = e.a.x + t * dx;
+            var py = e.a.y + t * dy;
+            if (Math.sqrt(Math.pow(px - x, 2) + Math.pow(py - y, 2)) < 6) return e;
+        }
+    }
+    return null;
+}
+
+function updateStats() {
+    document.getElementById("nodeCount").textContent = nodes.length;
+    document.getElementById("edgeCount").textContent = edges.length;
+    document.getElementById("streetCount").textContent = streets.length;
+    document.getElementById("colonyCount").textContent = colonies.length;
+    document.getElementById("locationCount").textContent = locations.length;
+    document.getElementById("zoneCount").textContent = zones.length;
+}
+
+function nodeInColony(node) {
+    for (var i = 0; i < colonies.length; i++) {
+        var c = colonies[i];
+        for (var j = 0; j < c.streets.length; j++) {
+            var s = c.streets[j];
+            for (var k = 0; k < s.nodes.length; k++) {
+                if (s.nodes[k] === node) return true;
+            }
+        }
+    }
+    return false;
+}
+
+function streetInColony(street) {
+    for (var i = 0; i < colonies.length; i++) {
+        var c = colonies[i];
+        for (var j = 0; j < c.streets.length; j++) {
+            if (c.streets[j].name === street.name) return true;
+        }
+    }
+    return false;
+}
+
+function isLocationNode(node) {
+    for (var i = 0; i < locations.length; i++) {
+        if (locations[i].node === node) return true;
+    }
+    return false;
+}
+
+function getLocationData(node) {
+    for (var i = 0; i < locations.length; i++) {
+        if (locations[i].node === node) return locations[i];
+    }
+    return null;
+}
+
+function colonyInZone(colony) {
+    for (var i = 0; i < zones.length; i++) {
+        var zone = zones[i];
+        for (var j = 0; j < zone.allColonies.length; j++) {
+            if (zone.allColonies[j] === colony) return zone;
+        }
+    }
+    return null;
+}
+
+function getZoneAt(x, y) {
+    for (var i = 0; i < zones.length; i++) {
+        var zone = zones[i];
+        var bounds = getZoneBounds(zone);
+        var cx = bounds.x + bounds.w / 2;
+        var cy = bounds.y + bounds.h / 2;
+        var dist = Math.sqrt(Math.pow(x - cx, 2) + Math.pow(y - cy, 2));
+        if (dist < 50) return zone;
+    }
+    return null;
+}
+
+function getZoneBounds(zone) {
+    var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (var i = 0; i < zone.allColonies.length; i++) {
+        var c = zone.allColonies[i];
+        if (c.bounds.x < minX) minX = c.bounds.x;
+        if (c.bounds.y < minY) minY = c.bounds.y;
+        if (c.bounds.x + c.bounds.w > maxX) maxX = c.bounds.x + c.bounds.w;
+        if (c.bounds.y + c.bounds.h > maxY) maxY = c.bounds.y + c.bounds.h;
+    }
+    return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+}
+
+// Delete a colony and all its nodes, edges, streets
+function deleteColony(colony) {
+    // Get all nodes from the colony
+    var colonyNodes = [];
+    for (var i = 0; i < colony.streets.length; i++) {
+        var s = colony.streets[i];
+        for (var j = 0; j < s.nodes.length; j++) {
+            colonyNodes.push(s.nodes[j]);
+        }
+    }
+    
+    // Remove edges connected to colony nodes
+    var newEdges = [];
+    for (var ei = 0; ei < edges.length; ei++) {
+        var e = edges[ei];
+        var aInColony = colonyNodes.indexOf(e.a) !== -1;
+        var bInColony = colonyNodes.indexOf(e.b) !== -1;
+        if (!aInColony && !bInColony) {
+            newEdges.push(e);
+        }
+    }
+    edges = newEdges;
+    
+    // Remove streets from colony
+    var newStreets = [];
+    for (var si = 0; si < streets.length; si++) {
+        var found = false;
+        for (var csi = 0; csi < colony.streets.length; csi++) {
+            if (streets[si].name === colony.streets[csi].name) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) newStreets.push(streets[si]);
+    }
+    streets = newStreets;
+    
+    // Remove nodes from colony
+    var newNodes = [];
+    for (var ni = 0; ni < nodes.length; ni++) {
+        if (colonyNodes.indexOf(nodes[ni]) === -1) {
+            newNodes.push(nodes[ni]);
+        }
+    }
+    nodes = newNodes;
+    
+    // Remove the colony itself
+    var newColonies = [];
+    for (var ci = 0; ci < colonies.length; ci++) {
+        if (colonies[ci] !== colony) {
+            newColonies.push(colonies[ci]);
+        }
+    }
+    colonies = newColonies;
+    
+    // Remove locations from colony
+    var newLocations = [];
+    for (var li = 0; li < locations.length; li++) {
+        if (locations[li].colony !== colony.name) {
+            newLocations.push(locations[li]);
+        }
+    }
+    locations = newLocations;
+    
+    redraw();
+}
+
+// Generate locations for a colony (homes, 1 hospital, 1 school, 1 mall)
+function generateLocationsForColony(colony, colonyStreets, streetSpacingPx) {
+    var colonyLocations = [];
+    var locationCounter = 1;
+    
+    // Create all location nodes (8 per street, 6 streets = 48 locations)
+    // Locations are placed above street nodes 2-9 (excluding first and last)
+    for (var s = 0; s < colonyStreets.length; s++) {
+        var street = colonyStreets[s];
+        var streetLocations = [];
+        
+        for (var n = 1; n < street.nodes.length - 1; n++) { // nodes 2-9 (index 1-8)
+            var streetNode = street.nodes[n];
+            // Place location node above the street node (halfway to the previous street or above first street)
+            var locationY = streetNode.y - streetSpacingPx / 2;
+            
+            var locationNode = { x: streetNode.x, y: locationY };
+            nodes.push(locationNode);
+            
+            // Connect location to street node
+            edges.push({ a: locationNode, b: streetNode });
+            
+            var locationData = {
+                node: locationNode,
+                colony: colony.name,
+                streetNo: s + 1,
+                streetName: street.name,
+                nodeNo: n + 1, // 2-9
+                name: "Home " + locationCounter,
+                type: "home",
+                connectedStreetNode: streetNode
+            };
+            
+            streetLocations.push(locationData);
+            colonyLocations.push(locationData);
+            locationCounter++;
+        }
+    }
+    
+    // Now randomly assign 1 hospital, 1 school, 1 mall
+    // Random street (0-5), random node position (1-8 which corresponds to nodes 2-9)
+    var specialLocations = ["hospital", "school", "mall"];
+    var usedPositions = [];
+    
+    for (var i = 0; i < specialLocations.length; i++) {
+        var type = specialLocations[i];
+        var randomStreet, randomNodeIdx, posKey;
+        
+        // Keep trying until we find an unused position
+        do {
+            randomStreet = Math.floor(Math.random() * 6); // 0-5
+            randomNodeIdx = Math.floor(Math.random() * 8); // 0-7 (represents nodes 2-9)
+            posKey = randomStreet + "_" + randomNodeIdx;
+        } while (usedPositions.indexOf(posKey) !== -1);
+        
+        usedPositions.push(posKey);
+        
+        // Find the location and update it
+        var locationIndex = randomStreet * 8 + randomNodeIdx;
+        colonyLocations[locationIndex].type = type;
+        
+        if (type === "hospital") {
+            colonyLocations[locationIndex].name = "Hospital";
+        } else if (type === "school") {
+            colonyLocations[locationIndex].name = "School";
+        } else if (type === "mall") {
+            colonyLocations[locationIndex].name = "Mall";
+        }
+    }
+    
+    // Renumber homes (excluding special locations)
+    var homeCounter = 1;
+    for (var j = 0; j < colonyLocations.length; j++) {
+        if (colonyLocations[j].type === "home") {
+            colonyLocations[j].name = "Home " + homeCounter;
+            homeCounter++;
+        }
+    }
+    
+    // Add to global locations array
+    for (var k = 0; k < colonyLocations.length; k++) {
+        locations.push(colonyLocations[k]);
+    }
+    
+    return colonyLocations;
+}
+
+// Create a single colony at a specific position (helper for zone creation)
+function createColonyAtPosition(name, x, y) {
+    var streetCount = 6;
+    var streetLength = 200;
+    var nodeCount = 10;
+    var streetSpacing = 40;
+
+    var streetLengthPx = streetLength / SCALE;
+    var streetSpacingPx = streetSpacing / SCALE;
+    var nodeSpacingPx = streetLengthPx / (nodeCount - 1);
+
+    var colonyStreets = [];
+    var startNodes = [];
+    var endNodes = [];
+
+    for (var s = 0; s < streetCount; s++) {
+        var streetName = name + " - Street " + (s + 1);
+        var streetNodes = [];
+        var streetY = y + s * streetSpacingPx;
+
+        for (var i = 0; i < nodeCount; i++) {
+            var nx = x + i * nodeSpacingPx;
+            var n = { x: nx, y: streetY };
+            nodes.push(n);
+            streetNodes.push(n);
+        }
+
+        for (var j = 0; j < streetNodes.length - 1; j++) {
+            edges.push({ a: streetNodes[j], b: streetNodes[j + 1] });
+        }
+
+        streets.push({ name: streetName, nodes: streetNodes });
+        colonyStreets.push({ name: streetName, nodes: streetNodes });
+
+        startNodes.push(streetNodes[0]);
+        endNodes.push(streetNodes[streetNodes.length - 1]);
+    }
+
+    // Connect start and end nodes (vertical connectors)
+    for (var si = 0; si < startNodes.length - 1; si++) {
+        edges.push({ a: startNodes[si], b: startNodes[si + 1] });
+    }
+    for (var ei = 0; ei < endNodes.length - 1; ei++) {
+        edges.push({ a: endNodes[ei], b: endNodes[ei + 1] });
+    }
+
+    var bounds = {
+        x: x - 10,
+        y: y - 20,
+        w: streetLengthPx + 20,
+        h: (streetCount - 1) * streetSpacingPx + 40
+    };
+
+    var newColony = { name: name, streets: colonyStreets, bounds: bounds };
+    colonies.push(newColony);
+    
+    // Generate locations for this colony
+    generateLocationsForColony(newColony, colonyStreets, streetSpacingPx);
+    
+    return newColony;
+}
+
+// Connect two colonies horizontally (left-right connection)
+function connectColoniesHorizontally(leftColony, rightColony) {
+    // Connect left colony's 10th nodes to right colony's 1st nodes
+    for (var s = 0; s < leftColony.streets.length; s++) {
+        var leftEndNode = leftColony.streets[s].nodes[leftColony.streets[s].nodes.length - 1];
+        var rightStartNode = rightColony.streets[s].nodes[0];
+        edges.push({ a: leftEndNode, b: rightStartNode });
+    }
+    
+    // Update neighbor references
+    leftColony.rightNeighbor = rightColony;
+    rightColony.leftNeighbor = leftColony;
+}
+
+// Connect two colonies vertically (top-bottom connection)
+function connectColoniesVertically(topColony, bottomColony) {
+    // Connect top colony's Street 6 (last street, index 5) to bottom colony's Street 1 (first street, index 0)
+    // Top colony Street 6 first node -> Bottom colony Street 1 first node
+    // Top colony Street 6 last node -> Bottom colony Street 1 last node
+    
+    var topStreet6 = topColony.streets[5]; // Last street (index 5)
+    var bottomStreet1 = bottomColony.streets[0]; // First street (index 0)
+    
+    // Connect first nodes
+    edges.push({ a: topStreet6.nodes[0], b: bottomStreet1.nodes[0] });
+    
+    // Connect last nodes
+    edges.push({ a: topStreet6.nodes[topStreet6.nodes.length - 1], b: bottomStreet1.nodes[bottomStreet1.nodes.length - 1] });
+    
+    // Store vertical neighbor references
+    topColony.bottomNeighbor = bottomColony;
+    bottomColony.topNeighbor = topColony;
+}
+
+// Create a zone with 21 colonies (7 top, 7 middle, 7 bottom)
+function createZone(zoneName, colonyNames, startX, startY) {
+    var streetCount = 6;
+    var streetSpacing = 40;
+    var streetLength = 200;
+    
+    var streetLengthPx = streetLength / SCALE;
+    var streetSpacingPx = streetSpacing / SCALE;
+    var colonyWidth = streetLengthPx + 10; // Colony width with small gap
+    var colonyHeight = (streetCount - 1) * streetSpacingPx + 20; // Colony height
+    var rowGap = streetSpacingPx; // Gap between rows
+    
+    var zoneColonies = {
+        top: [],
+        middle: [],
+        bottom: []
+    };
+    
+    // Create middle row (7 colonies)
+    // Start with center colony, then add 3 left and 3 right
+    var middleY = startY;
+    var centerX = startX;
+    
+    // Create center colony first
+    var centerColony = createColonyAtPosition(colonyNames.middle[3], centerX, middleY);
+    zoneColonies.middle[3] = centerColony;
+    
+    // Create 3 colonies to the left
+    var currentColony = centerColony;
+    for (var l = 2; l >= 0; l--) {
+        var leftX = currentColony.bounds.x - colonyWidth;
+        var newLeftColony = createColonyAtPosition(colonyNames.middle[l], leftX, middleY);
+        connectColoniesHorizontally(newLeftColony, currentColony);
+        zoneColonies.middle[l] = newLeftColony;
+        currentColony = newLeftColony;
+    }
+    
+    // Create 3 colonies to the right
+    currentColony = centerColony;
+    for (var r = 4; r <= 6; r++) {
+        var rightX = currentColony.bounds.x + colonyWidth;
+        var newRightColony = createColonyAtPosition(colonyNames.middle[r], rightX, middleY);
+        connectColoniesHorizontally(currentColony, newRightColony);
+        zoneColonies.middle[r] = newRightColony;
+        currentColony = newRightColony;
+    }
+    
+    // Create top row (7 colonies above middle row)
+    var topY = middleY - colonyHeight - rowGap;
+    for (var t = 0; t < 7; t++) {
+        var topX = zoneColonies.middle[t].bounds.x;
+        var topColony = createColonyAtPosition(colonyNames.top[t], topX, topY);
+        zoneColonies.top[t] = topColony;
+        
+        // Connect horizontally within top row
+        if (t > 0) {
+            connectColoniesHorizontally(zoneColonies.top[t - 1], topColony);
+        }
+        
+        // Connect vertically to middle row
+        connectColoniesVertically(topColony, zoneColonies.middle[t]);
+    }
+    
+    // Create bottom row (7 colonies below middle row)
+    var bottomY = middleY + colonyHeight + rowGap;
+    for (var b = 0; b < 7; b++) {
+        var bottomX = zoneColonies.middle[b].bounds.x;
+        var bottomColony = createColonyAtPosition(colonyNames.bottom[b], bottomX, bottomY);
+        zoneColonies.bottom[b] = bottomColony;
+        
+        // Connect horizontally within bottom row
+        if (b > 0) {
+            connectColoniesHorizontally(zoneColonies.bottom[b - 1], bottomColony);
+        }
+        
+        // Connect vertically to middle row
+        connectColoniesVertically(zoneColonies.middle[b], bottomColony);
+    }
+    
+    // Store zone data
+    var zone = {
+        name: zoneName,
+        colonies: zoneColonies,
+        allColonies: zoneColonies.top.concat(zoneColonies.middle).concat(zoneColonies.bottom)
+    };
+    zones.push(zone);
+    
+    // Connect zone to zone connector
+    connectZoneToConnector(zone);
+    
+    return zone;
+}
+
+// Connect zone to the zone connector edge along Y=0
+function connectZoneToConnector(zone) {
+    // Get zone bounds to determine which quadrant
+    var zoneBounds = getZoneBounds(zone);
+    var zoneCenter = toCartesian(zoneBounds.x + zoneBounds.w / 2, zoneBounds.y + zoneBounds.h / 2);
+    
+    // Determine if zone is on left (2nd/3rd quadrant) or right (1st/4th quadrant)
+    var isLeftSide = zoneCenter.x < 0;
+    
+    // Pick the appropriate edge colonies (top, middle, bottom)
+    var connectColonies = [];
+    var connectNodeIndex;
+    
+    if (isLeftSide) {
+        // Zone is on left side - connect from rightmost colonies (index 6)
+        connectColonies = [
+            zone.colonies.top[6],    // Top-right colony
+            zone.colonies.middle[6], // Middle-right colony
+            zone.colonies.bottom[6]  // Bottom-right colony
+        ];
+        connectNodeIndex = 9; // Last node (rightmost)
+    } else {
+        // Zone is on right side - connect from leftmost colonies (index 0)
+        connectColonies = [
+            zone.colonies.top[0],    // Top-left colony
+            zone.colonies.middle[0], // Middle-left colony
+            zone.colonies.bottom[0]  // Bottom-left colony
+        ];
+        connectNodeIndex = 0; // First node (leftmost)
+    }
+    
+    // Calculate the x position for connector node (at the edge of the zone)
+    var connectorX;
+    if (isLeftSide) {
+        // Put connector node at the right edge of the zone
+        connectorX = zoneBounds.x + zoneBounds.w + 20;
+    } else {
+        // Put connector node at the left edge of the zone
+        connectorX = zoneBounds.x - 20;
+    }
+    
+    // Create connector node at Y=0 (centerY in canvas coordinates)
+    var connectorNode = {
+        x: connectorX,
+        y: centerY, // Y=0 in Cartesian is centerY in canvas
+        zone: zone,
+        isConnector: true
+    };
+    
+    // Add to zone connector nodes
+    zoneConnector.nodes.push(connectorNode);
+    nodes.push(connectorNode);
+    
+    // Sort connector nodes by x position and create/update edges between them
+    zoneConnector.nodes.sort(function(a, b) { return a.x - b.x; });
+    
+    // Rebuild connector edges
+    zoneConnector.edges = [];
+    for (var i = 0; i < zoneConnector.nodes.length - 1; i++) {
+        var edge = { a: zoneConnector.nodes[i], b: zoneConnector.nodes[i + 1], isConnectorEdge: true };
+        zoneConnector.edges.push(edge);
+        // Also add to main edges array if not already there
+        var exists = false;
+        for (var e = 0; e < edges.length; e++) {
+            if ((edges[e].a === edge.a && edges[e].b === edge.b) ||
+                (edges[e].a === edge.b && edges[e].b === edge.a)) {
+                exists = true;
+                break;
+            }
+        }
+        if (!exists) {
+            edges.push(edge);
+        }
+    }
+    
+    // Connect all streets of ALL edge colonies (top, middle, bottom) to the connector node
+    for (var c = 0; c < connectColonies.length; c++) {
+        var connectColony = connectColonies[c];
+        for (var s = 0; s < connectColony.streets.length; s++) {
+            var street = connectColony.streets[s];
+            var streetNode = street.nodes[connectNodeIndex];
+            var connectionEdge = { 
+                a: streetNode, 
+                b: connectorNode, 
+                isZoneConnection: true,
+                zone: zone
+            };
+            zoneConnections.push(connectionEdge);
+            edges.push(connectionEdge);
+        }
+    }
+    
+    // Store connector node reference in zone
+    zone.connectorNode = connectorNode;
+    zone.connectColonies = connectColonies;
+    zone.connectNodeIndex = connectNodeIndex;
+}
+
+// Create a neighbor colony that shares an edge with the existing colony
+function createNeighborColony(existingColony, side, name) {
+    // side: 'right' or 'left'
+    var streetCount = 6;
+    var streetLength = 200;
+    var nodeCount = 10;
+    var streetSpacing = 40;
+
+    var streetLengthPx = streetLength / SCALE;
+    var streetSpacingPx = streetSpacing / SCALE;
+    var nodeSpacingPx = streetLengthPx / (nodeCount - 1);
+
+    var colonyStreets = [];
+    var startNodes = [];
+    var endNodes = [];
+    
+    // Get existing colony's edge nodes
+    var existingStartNodes = [];
+    var existingEndNodes = [];
+    for (var es = 0; es < existingColony.streets.length; es++) {
+        var existingStreet = existingColony.streets[es];
+        existingStartNodes.push(existingStreet.nodes[0]);
+        existingEndNodes.push(existingStreet.nodes[existingStreet.nodes.length - 1]);
+    }
+    
+    var baseY = existingColony.bounds.y + 20;
+
+    for (var s = 0; s < streetCount; s++) {
+        var streetName = name + " - Street " + (s + 1);
+        var streetNodes = [];
+        var streetY = baseY + s * streetSpacingPx;
+
+        for (var i = 0; i < nodeCount; i++) {
+            var nx, n;
+            if (side === 'right') {
+                // For right neighbor: nodes go right from existing's 10th node
+                nx = existingEndNodes[s].x + (i + 1) * nodeSpacingPx;
+            } else {
+                // For left neighbor: nodes go left from existing's 1st node
+                nx = existingStartNodes[s].x - (nodeCount - i) * nodeSpacingPx;
+            }
+            n = { x: nx, y: streetY };
+            nodes.push(n);
+            streetNodes.push(n);
+        }
+
+        // Connect nodes within street
+        for (var j = 0; j < streetNodes.length - 1; j++) {
+            edges.push({ a: streetNodes[j], b: streetNodes[j + 1] });
+        }
+        
+        // Connect colonies:
+        // RIGHT: new colony's 1st node → existing colony's 10th node
+        // LEFT: new colony's 10th node → existing colony's 1st node
+        if (side === 'right') {
+            edges.push({ a: streetNodes[0], b: existingEndNodes[s] });
+        } else {
+            edges.push({ a: streetNodes[streetNodes.length - 1], b: existingStartNodes[s] });
+        }
+
+        streets.push({ name: streetName, nodes: streetNodes });
+        colonyStreets.push({ name: streetName, nodes: streetNodes });
+
+        startNodes.push(streetNodes[0]);
+        endNodes.push(streetNodes[streetNodes.length - 1]);
+    }
+
+    // Connect the outer edge nodes of the new colony (vertical connectors)
+    // RIGHT: connect end nodes (10th - right edge, farthest from existing)
+    // LEFT: connect start nodes (1st - left edge, farthest from existing)
+    if (side === 'right') {
+        for (var ei = 0; ei < endNodes.length - 1; ei++) {
+            edges.push({ a: endNodes[ei], b: endNodes[ei + 1] });
+        }
+    } else {
+        for (var si2 = 0; si2 < startNodes.length - 1; si2++) {
+            edges.push({ a: startNodes[si2], b: startNodes[si2 + 1] });
+        }
+    }
+
+    var bounds;
+    if (side === 'right') {
+        bounds = {
+            x: existingEndNodes[0].x + nodeSpacingPx - 10,
+            y: baseY - 20,
+            w: streetLengthPx + 20,
+            h: (streetCount - 1) * streetSpacingPx + 40
+        };
+    } else {
+        bounds = {
+            x: existingStartNodes[0].x - streetLengthPx - nodeSpacingPx - 10,
+            y: baseY - 20,
+            w: streetLengthPx + 20,
+            h: (streetCount - 1) * streetSpacingPx + 40
+        };
+    }
+
+    // Store shared edge info for future neighbors
+    var newColony = { 
+        name: name, 
+        streets: colonyStreets, 
+        bounds: bounds,
+        leftNeighbor: side === 'right' ? existingColony : null,
+        rightNeighbor: side === 'left' ? existingColony : null
+    };
+    
+    // Update existing colony's neighbor reference
+    if (side === 'right') {
+        existingColony.rightNeighbor = newColony;
+    } else {
+        existingColony.leftNeighbor = newColony;
+    }
+    
+    colonies.push(newColony);
+    
+    // Generate locations for this colony
+    generateLocationsForColony(newColony, colonyStreets, streetSpacingPx);
+    
+    redraw();
+    return newColony;
+}
+
+// Draw rounded rectangle helper
+function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+}
+
+// Main draw function
+function redraw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Background
+    ctx.fillStyle = "#f8fafc";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Grid
+    ctx.strokeStyle = "rgba(148, 163, 184, 0.3)";
+    ctx.lineWidth = 1;
+    var gridSize = 100 / SCALE;
+    for (var gx = centerX % gridSize; gx < canvas.width; gx += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(gx, 0);
+        ctx.lineTo(gx, canvas.height);
+        ctx.stroke();
+    }
+    for (var gy = centerY % gridSize; gy < canvas.height; gy += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(0, gy);
+        ctx.lineTo(canvas.width, gy);
+        ctx.stroke();
+    }
+
+    // Axis
+    ctx.strokeStyle = "rgba(100, 116, 139, 0.5)";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.moveTo(centerX, 0);
+    ctx.lineTo(centerX, canvas.height);
+    ctx.moveTo(0, centerY);
+    ctx.lineTo(canvas.width, centerY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Draw zone connector (the main highway connecting all zones along Y=0)
+    if (zoneConnector.nodes.length > 0) {
+        // Draw connector edges (main highway)
+        ctx.strokeStyle = "#f97316"; // Orange for connector
+        ctx.lineWidth = 4;
+        for (var zei = 0; zei < zoneConnector.edges.length; zei++) {
+            var ze = zoneConnector.edges[zei];
+            ctx.beginPath();
+            ctx.moveTo(ze.a.x, ze.a.y);
+            ctx.lineTo(ze.b.x, ze.b.y);
+            ctx.stroke();
+        }
+        
+        // Draw connection lines from zones to connector
+        ctx.strokeStyle = "rgba(249, 115, 22, 0.5)";
+        ctx.lineWidth = 2;
+        ctx.setLineDash([4, 4]);
+        for (var zci = 0; zci < zoneConnections.length; zci++) {
+            var zc = zoneConnections[zci];
+            ctx.beginPath();
+            ctx.moveTo(zc.a.x, zc.a.y);
+            ctx.lineTo(zc.b.x, zc.b.y);
+            ctx.stroke();
+        }
+        ctx.setLineDash([]);
+        
+        // Draw connector nodes
+        for (var zni = 0; zni < zoneConnector.nodes.length; zni++) {
+            var zn = zoneConnector.nodes[zni];
+            
+            // Glow
+            var connGlow = ctx.createRadialGradient(zn.x, zn.y, 0, zn.x, zn.y, 15);
+            connGlow.addColorStop(0, "rgba(249, 115, 22, 0.6)");
+            connGlow.addColorStop(1, "rgba(249, 115, 22, 0)");
+            ctx.fillStyle = connGlow;
+            ctx.beginPath();
+            ctx.arc(zn.x, zn.y, 15, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Node
+            ctx.fillStyle = "#f97316";
+            ctx.beginPath();
+            ctx.arc(zn.x, zn.y, 8, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // White center
+            ctx.fillStyle = "white";
+            ctx.beginPath();
+            ctx.arc(zn.x, zn.y, 4, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Label
+            if (zn.zone) {
+                ctx.fillStyle = "#f97316";
+                ctx.font = "bold 9px Arial";
+                ctx.textAlign = "center";
+                ctx.fillText(zn.zone.name, zn.x, zn.y - 12);
+                ctx.textAlign = "left";
+            }
+        }
+    }
+
+    // Draw zone icons
+    for (var zi = 0; zi < zones.length; zi++) {
+        var zone = zones[zi];
+        var zoneBounds = getZoneBounds(zone);
+        var zx = zoneBounds.x + zoneBounds.w / 2;
+        var zy = zoneBounds.y + zoneBounds.h / 2;
+
+        // Glow
+        var zoneGlow = ctx.createRadialGradient(zx, zy, 0, zx, zy, 60);
+        zoneGlow.addColorStop(0, "rgba(16, 185, 129, 0.5)");
+        zoneGlow.addColorStop(1, "rgba(16, 185, 129, 0)");
+        ctx.fillStyle = zoneGlow;
+        ctx.beginPath();
+        ctx.arc(zx, zy, 60, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Circle
+        var zoneGrad = ctx.createLinearGradient(zx - 35, zy - 35, zx + 35, zy + 35);
+        zoneGrad.addColorStop(0, "#10b981");
+        zoneGrad.addColorStop(1, "#059669");
+        ctx.fillStyle = zoneGrad;
+        ctx.beginPath();
+        ctx.arc(zx, zy, 40, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Inner ring
+        ctx.strokeStyle = "rgba(255,255,255,0.6)";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(zx, zy, 30, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Icon
+        ctx.font = "28px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = "white";
+        ctx.fillText("🏙️", zx, zy);
+
+        // Name badge
+        ctx.font = "bold 12px Arial";
+        var ztw = ctx.measureText(zone.name).width;
+        ctx.fillStyle = "rgba(16, 185, 129, 0.95)";
+        roundRect(ctx, zx - ztw / 2 - 10, zy + 45, ztw + 20, 22, 11);
+        ctx.fill();
+        ctx.fillStyle = "white";
+        ctx.fillText(zone.name, zx, zy + 56);
+
+        // Count badge (21 colonies)
+        ctx.fillStyle = "#8b5cf6";
+        ctx.beginPath();
+        ctx.arc(zx + 30, zy - 25, 14, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "white";
+        ctx.font = "bold 10px Arial";
+        ctx.fillText("21", zx + 30, zy - 25);
+
+        // Hint
+        ctx.fillStyle = "rgba(100,100,100,0.6)";
+        ctx.font = "9px Arial";
+        ctx.fillText("Click to view zone", zx, zy + 75);
+
+        ctx.textAlign = "left";
+        ctx.textBaseline = "alphabetic";
+    }
+
+    // Draw colony icons (only for colonies NOT in a zone)
+    for (var ci = 0; ci < colonies.length; ci++) {
+        var c = colonies[ci];
+        
+        // Skip colonies that are part of a zone
+        if (colonyInZone(c)) continue;
+        
+        var cx = c.bounds.x + c.bounds.w / 2;
+        var cy = c.bounds.y + c.bounds.h / 2;
+
+        // Glow
+        var glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, 40);
+        glow.addColorStop(0, "rgba(139, 92, 246, 0.4)");
+        glow.addColorStop(1, "rgba(139, 92, 246, 0)");
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 40, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Circle
+        var grad = ctx.createLinearGradient(cx - 25, cy - 25, cx + 25, cy + 25);
+        grad.addColorStop(0, "#8b5cf6");
+        grad.addColorStop(1, "#6d28d9");
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 28, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Inner ring
+        ctx.strokeStyle = "rgba(255,255,255,0.6)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 20, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Icon
+        ctx.font = "22px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = "white";
+        ctx.fillText("🏘️", cx, cy);
+
+        // Name badge
+        ctx.font = "bold 11px Arial";
+        var tw = ctx.measureText(c.name).width;
+        ctx.fillStyle = "rgba(139, 92, 246, 0.95)";
+        roundRect(ctx, cx - tw / 2 - 8, cy + 32, tw + 16, 20, 10);
+        ctx.fill();
+        ctx.fillStyle = "white";
+        ctx.fillText(c.name, cx, cy + 42);
+
+        // Count badge
+        ctx.fillStyle = "#10b981";
+        ctx.beginPath();
+        ctx.arc(cx + 22, cy - 18, 10, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "white";
+        ctx.font = "bold 9px Arial";
+        ctx.fillText(c.streets.length.toString(), cx + 22, cy - 18);
+
+        // Hint
+        ctx.fillStyle = "rgba(100,100,100,0.6)";
+        ctx.font = "9px Arial";
+        ctx.fillText("Click to view", cx, cy + 60);
+
+        ctx.textAlign = "left";
+        ctx.textBaseline = "alphabetic";
+    }
+
+    // Draw streets (not in colonies)
+    for (var si = 0; si < streets.length; si++) {
+        var s = streets[si];
+        if (streetInColony(s)) continue;
+
+        ctx.strokeStyle = "#475569";
+        ctx.lineWidth = 4;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        for (var ni = 0; ni < s.nodes.length; ni++) {
+            var n = s.nodes[ni];
+            if (ni === 0) ctx.moveTo(n.x, n.y);
+            else ctx.lineTo(n.x, n.y);
+        }
+        ctx.stroke();
+
+        // Label
+        var mid = s.nodes[Math.floor(s.nodes.length / 2)];
+        ctx.font = "bold 10px Arial";
+        ctx.fillStyle = "#059669";
+        ctx.fillText(s.name, mid.x + 8, mid.y - 4);
+    }
+
+    // Draw edges (not in colonies)
+    for (var ei = 0; ei < edges.length; ei++) {
+        var e = edges[ei];
+        if (nodeInColony(e.a) || nodeInColony(e.b)) continue;
+
+        ctx.strokeStyle = "rgba(100, 116, 139, 0.6)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(e.a.x, e.a.y);
+        ctx.lineTo(e.b.x, e.b.y);
+        ctx.stroke();
+
+        // Distance
+        var d = calcDistance(e.a, e.b).toFixed(0);
+        var mx = (e.a.x + e.b.x) / 2;
+        var my = (e.a.y + e.b.y) / 2;
+        ctx.fillStyle = "#0d9488";
+        ctx.font = "10px Arial";
+        ctx.fillText(d + "m", mx + 4, my - 4);
+    }
+
+    // Origin marker
+    ctx.fillStyle = "#ef4444";
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "white";
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#ef4444";
+    ctx.font = "bold 10px Arial";
+    ctx.fillText("Origin", centerX + 12, centerY + 4);
+
+    // Draw nodes (not in colonies)
+    for (var ndi = 0; ndi < nodes.length; ndi++) {
+        var nd = nodes[ndi];
+        if (nodeInColony(nd)) continue;
+
+        // Shadow
+        ctx.fillStyle = "rgba(59, 130, 246, 0.3)";
+        ctx.beginPath();
+        ctx.arc(nd.x + 1, nd.y + 2, NODE_RADIUS + 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Node
+        ctx.fillStyle = "#3b82f6";
+        ctx.beginPath();
+        ctx.arc(nd.x, nd.y, NODE_RADIUS, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = "#1d4ed8";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Label
+        var p = toCartesian(nd.x, nd.y);
+        ctx.fillStyle = "#1e293b";
+        ctx.font = "9px Arial";
+        ctx.fillText("N" + ndi + " (" + p.x + "m," + p.y + "m)", nd.x + 8, nd.y - 4);
+    }
+
+    updateStats();
+}
+
+// Colony detail view
+function openColony(colony) {
+    currentOpenColony = colony;
+    document.getElementById("colonyName").textContent = colony.name;
+    document.getElementById("cStreets").textContent = colony.streets.length;
+
+    var totalNodes = 0;
+    for (var i = 0; i < colony.streets.length; i++) {
+        totalNodes += colony.streets[i].nodes.length;
+    }
+    document.getElementById("cNodes").textContent = totalNodes;
+
+    // Count locations for this colony
+    var colonyLocationCount = 0;
+    var hospitalCount = 0, schoolCount = 0, mallCount = 0, homeCount = 0;
+    for (var li = 0; li < locations.length; li++) {
+        if (locations[li].colony === colony.name) {
+            colonyLocationCount++;
+            if (locations[li].type === "hospital") hospitalCount++;
+            else if (locations[li].type === "school") schoolCount++;
+            else if (locations[li].type === "mall") mallCount++;
+            else homeCount++;
+        }
+    }
+    document.getElementById("cLocations").textContent = colonyLocationCount;
+    document.getElementById("cLocations").title = "🏠 " + homeCount + " | 🏥 " + hospitalCount + " | 🏫 " + schoolCount + " | 🏬 " + mallCount;
+
+    var areaW = Math.round(colony.bounds.w * SCALE);
+    var areaH = Math.round(colony.bounds.h * SCALE);
+    document.getElementById("cArea").textContent = areaW + "×" + areaH;
+
+    // Count and display neighbors
+    var neighborCount = 0;
+    var neighborNames = [];
+    if (colony.leftNeighbor) {
+        neighborCount++;
+        neighborNames.push("← " + colony.leftNeighbor.name);
+    }
+    if (colony.rightNeighbor) {
+        neighborCount++;
+        neighborNames.push(colony.rightNeighbor.name + " →");
+    }
+    document.getElementById("cNeighbors").textContent = neighborCount;
+    document.getElementById("cNeighbors").title = neighborNames.length > 0 ? neighborNames.join(", ") : "No neighbors";
+
+    // Streets list
+    var list = document.getElementById("streetsList");
+    list.innerHTML = "";
+    for (var j = 0; j < colony.streets.length; j++) {
+        var st = colony.streets[j];
+        var div = document.createElement("div");
+        div.className = "street-card";
+        div.innerHTML = '<div class="name">🛣️ ' + st.name + '</div><div class="detail">' + st.nodes.length + ' nodes • 200m</div>';
+        list.appendChild(div);
+    }
+
+    // Draw colony detail
+    drawColonyDetail(colony);
+
+    colonyOverlay.classList.add("active");
+}
+
+function closeColony() {
+    colonyOverlay.classList.remove("active");
+}
+
+// Zone detail view
+function openZone(zone) {
+    currentOpenZone = zone;
+    document.getElementById("zoneName").textContent = zone.name;
+    document.getElementById("zColonies").textContent = zone.allColonies.length;
+    
+    var totalStreets = 0;
+    var totalNodes = 0;
+    var totalLocations = 0;
+    
+    for (var i = 0; i < zone.allColonies.length; i++) {
+        var col = zone.allColonies[i];
+        totalStreets += col.streets.length;
+        for (var j = 0; j < col.streets.length; j++) {
+            totalNodes += col.streets[j].nodes.length;
+        }
+    }
+    
+    // Count locations in zone
+    for (var li = 0; li < locations.length; li++) {
+        for (var ci = 0; ci < zone.allColonies.length; ci++) {
+            if (locations[li].colony === zone.allColonies[ci].name) {
+                totalLocations++;
+                break;
+            }
+        }
+    }
+    
+    document.getElementById("zStreets").textContent = totalStreets;
+    document.getElementById("zNodes").textContent = totalNodes;
+    document.getElementById("zLocations").textContent = totalLocations;
+    
+    // Colony list
+    var list = document.getElementById("zoneColonyList");
+    list.innerHTML = "";
+    
+    // Top row
+    var topLabel = document.createElement("div");
+    topLabel.style.cssText = "width:100%;font-weight:bold;color:#10b981;";
+    topLabel.textContent = "Top Row: ";
+    for (var t = 0; t < zone.colonies.top.length; t++) {
+        topLabel.textContent += zone.colonies.top[t].name + (t < 6 ? ", " : "");
+    }
+    list.appendChild(topLabel);
+    
+    // Middle row
+    var midLabel = document.createElement("div");
+    midLabel.style.cssText = "width:100%;font-weight:bold;color:#8b5cf6;";
+    midLabel.textContent = "Middle Row: ";
+    for (var m = 0; m < zone.colonies.middle.length; m++) {
+        midLabel.textContent += zone.colonies.middle[m].name + (m < 6 ? ", " : "");
+    }
+    list.appendChild(midLabel);
+    
+    // Bottom row
+    var botLabel = document.createElement("div");
+    botLabel.style.cssText = "width:100%;font-weight:bold;color:#f59e0b;";
+    botLabel.textContent = "Bottom Row: ";
+    for (var b = 0; b < zone.colonies.bottom.length; b++) {
+        botLabel.textContent += zone.colonies.bottom[b].name + (b < 6 ? ", " : "");
+    }
+    list.appendChild(botLabel);
+    
+    // Draw zone detail
+    drawZoneDetail(zone);
+    
+    zoneOverlay.classList.add("active");
+}
+
+function closeZone() {
+    zoneOverlay.classList.remove("active");
+}
+
+function drawZoneDetail(zone) {
+    var cw = zoneCanvas.width;
+    var ch = zoneCanvas.height;
+
+    zoneCtx.clearRect(0, 0, cw, ch);
+    zoneCtx.fillStyle = "#f8fafc";
+    zoneCtx.fillRect(0, 0, cw, ch);
+
+    // Grid
+    zoneCtx.strokeStyle = "rgba(148, 163, 184, 0.2)";
+    zoneCtx.lineWidth = 1;
+    for (var gx = 0; gx < cw; gx += 30) {
+        zoneCtx.beginPath();
+        zoneCtx.moveTo(gx, 0);
+        zoneCtx.lineTo(gx, ch);
+        zoneCtx.stroke();
+    }
+    for (var gy = 0; gy < ch; gy += 30) {
+        zoneCtx.beginPath();
+        zoneCtx.moveTo(0, gy);
+        zoneCtx.lineTo(cw, gy);
+        zoneCtx.stroke();
+    }
+
+    // Calculate bounds for all colonies in zone
+    var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (var ci = 0; ci < zone.allColonies.length; ci++) {
+        var col = zone.allColonies[ci];
+        for (var si = 0; si < col.streets.length; si++) {
+            var st = col.streets[si];
+            for (var ni = 0; ni < st.nodes.length; ni++) {
+                var n = st.nodes[ni];
+                if (n.x < minX) minX = n.x;
+                if (n.y < minY) minY = n.y;
+                if (n.x > maxX) maxX = n.x;
+                if (n.y > maxY) maxY = n.y;
+            }
+        }
+    }
+
+    var zoneW = maxX - minX || 1;
+    var zoneH = maxY - minY || 1;
+    var pad = 40;
+    var scaleX = (cw - pad * 2) / zoneW;
+    var scaleY = (ch - pad * 2) / zoneH;
+    var sc = Math.min(scaleX, scaleY);
+    var offX = (cw - zoneW * sc) / 2 - minX * sc;
+    var offY = (ch - zoneH * sc) / 2 - minY * sc;
+
+    // Define row colors
+    var rowColors = {
+        top: "#10b981",
+        middle: "#8b5cf6",
+        bottom: "#f59e0b"
+    };
+
+    // Draw all colonies
+    var rows = ["top", "middle", "bottom"];
+    for (var ri = 0; ri < rows.length; ri++) {
+        var rowName = rows[ri];
+        var rowColonies = zone.colonies[rowName];
+        var rowColor = rowColors[rowName];
+        
+        for (var rci = 0; rci < rowColonies.length; rci++) {
+            var colony = rowColonies[rci];
+            
+            // Draw streets for this colony
+            for (var si2 = 0; si2 < colony.streets.length; si2++) {
+                var street = colony.streets[si2];
+                zoneCtx.strokeStyle = rowColor;
+                zoneCtx.lineWidth = 2;
+                zoneCtx.lineCap = "round";
+                zoneCtx.beginPath();
+                for (var ni2 = 0; ni2 < street.nodes.length; ni2++) {
+                    var nd = street.nodes[ni2];
+                    var dx = nd.x * sc + offX;
+                    var dy = nd.y * sc + offY;
+                    if (ni2 === 0) zoneCtx.moveTo(dx, dy);
+                    else zoneCtx.lineTo(dx, dy);
+                }
+                zoneCtx.stroke();
+            }
+            
+            // Draw vertical connectors for colony
+            zoneCtx.strokeStyle = rowColor;
+            zoneCtx.lineWidth = 1;
+            zoneCtx.setLineDash([2, 2]);
+            
+            // Left connector
+            zoneCtx.beginPath();
+            for (var li = 0; li < colony.streets.length; li++) {
+                var ln = colony.streets[li].nodes[0];
+                var ldx = ln.x * sc + offX;
+                var ldy = ln.y * sc + offY;
+                if (li === 0) zoneCtx.moveTo(ldx, ldy);
+                else zoneCtx.lineTo(ldx, ldy);
+            }
+            zoneCtx.stroke();
+            
+            // Right connector
+            zoneCtx.beginPath();
+            for (var rri = 0; rri < colony.streets.length; rri++) {
+                var rs = colony.streets[rri];
+                var rn = rs.nodes[rs.nodes.length - 1];
+                var rdx = rn.x * sc + offX;
+                var rdy = rn.y * sc + offY;
+                if (rri === 0) zoneCtx.moveTo(rdx, rdy);
+                else zoneCtx.lineTo(rdx, rdy);
+            }
+            zoneCtx.stroke();
+            zoneCtx.setLineDash([]);
+            
+            // Draw colony label
+            var colCx = colony.bounds.x + colony.bounds.w / 2;
+            var colCy = colony.bounds.y + colony.bounds.h / 2;
+            var labelX = colCx * sc + offX;
+            var labelY = colCy * sc + offY;
+            
+            zoneCtx.fillStyle = rowColor;
+            zoneCtx.font = "bold 8px Arial";
+            zoneCtx.textAlign = "center";
+            zoneCtx.fillText(colony.name, labelX, labelY);
+        }
+    }
+    
+    // Draw horizontal connections between colonies
+    zoneCtx.strokeStyle = "rgba(100, 100, 100, 0.4)";
+    zoneCtx.lineWidth = 1;
+    
+    for (var hri = 0; hri < rows.length; hri++) {
+        var hRowColonies = zone.colonies[rows[hri]];
+        for (var hci = 0; hci < hRowColonies.length - 1; hci++) {
+            var leftCol = hRowColonies[hci];
+            var rightCol = hRowColonies[hci + 1];
+            
+            // Draw connection lines between colonies
+            for (var hsi = 0; hsi < leftCol.streets.length; hsi++) {
+                var leftEnd = leftCol.streets[hsi].nodes[leftCol.streets[hsi].nodes.length - 1];
+                var rightStart = rightCol.streets[hsi].nodes[0];
+                
+                zoneCtx.beginPath();
+                zoneCtx.moveTo(leftEnd.x * sc + offX, leftEnd.y * sc + offY);
+                zoneCtx.lineTo(rightStart.x * sc + offX, rightStart.y * sc + offY);
+                zoneCtx.stroke();
+            }
+        }
+    }
+    
+    // Draw vertical connections between rows
+    zoneCtx.strokeStyle = "#ef4444";
+    zoneCtx.lineWidth = 2;
+    
+    // Top to Middle connections
+    for (var vci = 0; vci < 7; vci++) {
+        var topCol = zone.colonies.top[vci];
+        var midCol = zone.colonies.middle[vci];
+        
+        // Top colony street 6 to middle colony street 1
+        var topStreet6 = topCol.streets[5];
+        var midStreet1 = midCol.streets[0];
+        
+        // First node connection
+        zoneCtx.beginPath();
+        zoneCtx.moveTo(topStreet6.nodes[0].x * sc + offX, topStreet6.nodes[0].y * sc + offY);
+        zoneCtx.lineTo(midStreet1.nodes[0].x * sc + offX, midStreet1.nodes[0].y * sc + offY);
+        zoneCtx.stroke();
+        
+        // Last node connection
+        zoneCtx.beginPath();
+        zoneCtx.moveTo(topStreet6.nodes[9].x * sc + offX, topStreet6.nodes[9].y * sc + offY);
+        zoneCtx.lineTo(midStreet1.nodes[9].x * sc + offX, midStreet1.nodes[9].y * sc + offY);
+        zoneCtx.stroke();
+    }
+    
+    // Middle to Bottom connections
+    for (var vci2 = 0; vci2 < 7; vci2++) {
+        var midCol2 = zone.colonies.middle[vci2];
+        var botCol = zone.colonies.bottom[vci2];
+        
+        // Middle colony street 6 to bottom colony street 1
+        var midStreet6 = midCol2.streets[5];
+        var botStreet1 = botCol.streets[0];
+        
+        // First node connection
+        zoneCtx.beginPath();
+        zoneCtx.moveTo(midStreet6.nodes[0].x * sc + offX, midStreet6.nodes[0].y * sc + offY);
+        zoneCtx.lineTo(botStreet1.nodes[0].x * sc + offX, botStreet1.nodes[0].y * sc + offY);
+        zoneCtx.stroke();
+        
+        // Last node connection
+        zoneCtx.beginPath();
+        zoneCtx.moveTo(midStreet6.nodes[9].x * sc + offX, midStreet6.nodes[9].y * sc + offY);
+        zoneCtx.lineTo(botStreet1.nodes[9].x * sc + offX, botStreet1.nodes[9].y * sc + offY);
+        zoneCtx.stroke();
+    }
+
+    // Draw zone connector connection (if exists)
+    if (zone.connectorNode) {
+        var zoneBounds = getZoneBounds(zone);
+        var zoneCenter = toCartesian(zoneBounds.x + zoneBounds.w / 2, zoneBounds.y + zoneBounds.h / 2);
+        var isLeftSide = zoneCenter.x < 0;
+        
+        // Get all edge colonies (top, middle, bottom)
+        var connectColonies = [];
+        var connectNodeIndex;
+        
+        if (isLeftSide) {
+            connectColonies = [
+                zone.colonies.top[6],
+                zone.colonies.middle[6],
+                zone.colonies.bottom[6]
+            ];
+            connectNodeIndex = 9;
+        } else {
+            connectColonies = [
+                zone.colonies.top[0],
+                zone.colonies.middle[0],
+                zone.colonies.bottom[0]
+            ];
+            connectNodeIndex = 0;
+        }
+        
+        // Draw connector node
+        var cnX = zone.connectorNode.x * sc + offX;
+        var cnY = zone.connectorNode.y * sc + offY;
+        
+        // Draw connection lines from all edge colonies to connector
+        zoneCtx.strokeStyle = "#f97316";
+        zoneCtx.lineWidth = 2;
+        zoneCtx.setLineDash([3, 3]);
+        
+        for (var cc = 0; cc < connectColonies.length; cc++) {
+            var connectColony = connectColonies[cc];
+            for (var cs = 0; cs < connectColony.streets.length; cs++) {
+                var streetNode = connectColony.streets[cs].nodes[connectNodeIndex];
+                zoneCtx.beginPath();
+                zoneCtx.moveTo(streetNode.x * sc + offX, streetNode.y * sc + offY);
+                zoneCtx.lineTo(cnX, cnY);
+                zoneCtx.stroke();
+            }
+        }
+        zoneCtx.setLineDash([]);
+        
+        // Draw connector node circle
+        zoneCtx.fillStyle = "#f97316";
+        zoneCtx.beginPath();
+        zoneCtx.arc(cnX, cnY, 8, 0, Math.PI * 2);
+        zoneCtx.fill();
+        
+        zoneCtx.fillStyle = "white";
+        zoneCtx.beginPath();
+        zoneCtx.arc(cnX, cnY, 4, 0, Math.PI * 2);
+        zoneCtx.fill();
+        
+        // Label
+        zoneCtx.fillStyle = "#f97316";
+        zoneCtx.font = "bold 9px Arial";
+        zoneCtx.textAlign = "center";
+        zoneCtx.fillText("Zone Connector", cnX, cnY - 12);
+    }
+
+    zoneCtx.textAlign = "left";
+    zoneCtx.textBaseline = "alphabetic";
+
+    // Legend
+    zoneCtx.fillStyle = "rgba(0,0,0,0.6)";
+    zoneCtx.font = "10px Arial";
+    zoneCtx.fillText("🟢 Top Row | 🟣 Middle Row | 🟠 Bottom Row | 🔴 Vertical Connections | 🟠 Zone Connector", 10, ch - 10);
+}
+
+function drawColonyDetail(colony) {
+    var cw = colonyCanvas.width;
+    var ch = colonyCanvas.height;
+
+    colonyCtx.clearRect(0, 0, cw, ch);
+    colonyCtx.fillStyle = "#f8fafc";
+    colonyCtx.fillRect(0, 0, cw, ch);
+
+    // Grid
+    colonyCtx.strokeStyle = "rgba(148, 163, 184, 0.3)";
+    colonyCtx.lineWidth = 1;
+    for (var gx = 0; gx < cw; gx += 40) {
+        colonyCtx.beginPath();
+        colonyCtx.moveTo(gx, 0);
+        colonyCtx.lineTo(gx, ch);
+        colonyCtx.stroke();
+    }
+    for (var gy = 0; gy < ch; gy += 40) {
+        colonyCtx.beginPath();
+        colonyCtx.moveTo(0, gy);
+        colonyCtx.lineTo(cw, gy);
+        colonyCtx.stroke();
+    }
+
+    // Collect all colonies to display (main colony + neighbors)
+    var coloniesToDraw = [colony];
+    if (colony.leftNeighbor) coloniesToDraw.push(colony.leftNeighbor);
+    if (colony.rightNeighbor) coloniesToDraw.push(colony.rightNeighbor);
+
+    // Calculate bounds including all neighbor colonies AND their locations
+    var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (var ci = 0; ci < coloniesToDraw.length; ci++) {
+        var col = coloniesToDraw[ci];
+        for (var si = 0; si < col.streets.length; si++) {
+            var st = col.streets[si];
+            for (var ni = 0; ni < st.nodes.length; ni++) {
+                var n = st.nodes[ni];
+                if (n.x < minX) minX = n.x;
+                if (n.y < minY) minY = n.y;
+                if (n.x > maxX) maxX = n.x;
+                if (n.y > maxY) maxY = n.y;
+            }
+        }
+        // Also include locations in bounds calculation
+        for (var li = 0; li < locations.length; li++) {
+            if (locations[li].colony === col.name) {
+                var locNode = locations[li].node;
+                if (locNode.x < minX) minX = locNode.x;
+                if (locNode.y < minY) minY = locNode.y;
+                if (locNode.x > maxX) maxX = locNode.x;
+                if (locNode.y > maxY) maxY = locNode.y;
+            }
+        }
+    }
+
+    var colW = maxX - minX || 1;
+    var colH = maxY - minY || 1;
+    var pad = 60;
+    var scaleX = (cw - pad * 2) / colW;
+    var scaleY = (ch - pad * 2) / colH;
+    var sc = Math.min(scaleX, scaleY, 4);
+    var offX = (cw - colW * sc) / 2 - minX * sc;
+    var offY = (ch - colH * sc) / 2 - minY * sc;
+
+    // Draw all colonies (main + neighbors)
+    var mainColors = ["#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
+    var neighborColors = ["#94a3b8", "#a1a1aa", "#9ca3af", "#a3a3a3", "#a8a29e", "#b4b4b4"];
+
+    for (var ci2 = 0; ci2 < coloniesToDraw.length; ci2++) {
+        var currentCol = coloniesToDraw[ci2];
+        var isMainColony = (currentCol === colony);
+        var colors = isMainColony ? mainColors : neighborColors;
+        var lineWidth = isMainColony ? 5 : 3;
+        var nodeRadius = isMainColony ? 6 : 4;
+
+        // Draw colony background highlight for neighbors
+        if (!isMainColony) {
+            var colMinX = Infinity, colMinY = Infinity, colMaxX = -Infinity, colMaxY = -Infinity;
+            for (var bsi = 0; bsi < currentCol.streets.length; bsi++) {
+                var bst = currentCol.streets[bsi];
+                for (var bni = 0; bni < bst.nodes.length; bni++) {
+                    var bn = bst.nodes[bni];
+                    if (bn.x < colMinX) colMinX = bn.x;
+                    if (bn.y < colMinY) colMinY = bn.y;
+                    if (bn.x > colMaxX) colMaxX = bn.x;
+                    if (bn.y > colMaxY) colMaxY = bn.y;
+                }
+            }
+            colonyCtx.fillStyle = "rgba(148, 163, 184, 0.15)";
+            var bgX = colMinX * sc + offX - 10;
+            var bgY = colMinY * sc + offY - 10;
+            var bgW = (colMaxX - colMinX) * sc + 20;
+            var bgH = (colMaxY - colMinY) * sc + 20;
+            colonyCtx.fillRect(bgX, bgY, bgW, bgH);
+            
+            // Draw neighbor colony name label
+            colonyCtx.fillStyle = "rgba(100, 116, 139, 0.9)";
+            colonyCtx.font = "bold 12px Arial";
+            colonyCtx.textAlign = "center";
+            colonyCtx.fillText("🏘️ " + currentCol.name + " (Neighbor)", bgX + bgW / 2, bgY - 5);
+        }
+
+        // Draw streets for this colony
+        for (var si2 = 0; si2 < currentCol.streets.length; si2++) {
+            var s = currentCol.streets[si2];
+            colonyCtx.strokeStyle = colors[si2 % colors.length];
+            colonyCtx.lineWidth = lineWidth;
+            colonyCtx.lineCap = "round";
+            colonyCtx.beginPath();
+            for (var ni2 = 0; ni2 < s.nodes.length; ni2++) {
+                var nd = s.nodes[ni2];
+                var dx = nd.x * sc + offX;
+                var dy = nd.y * sc + offY;
+                if (ni2 === 0) colonyCtx.moveTo(dx, dy);
+                else colonyCtx.lineTo(dx, dy);
+            }
+            colonyCtx.stroke();
+
+            // Label
+            if (isMainColony) {
+                var mid = s.nodes[Math.floor(s.nodes.length / 2)];
+                var mx = mid.x * sc + offX;
+                var my = mid.y * sc + offY;
+                colonyCtx.fillStyle = colors[si2 % colors.length];
+                colonyCtx.font = "bold 11px Arial";
+                colonyCtx.textAlign = "center";
+                colonyCtx.fillText(s.name, mx, my - 12);
+            }
+        }
+
+        // Connectors for this colony
+        colonyCtx.strokeStyle = isMainColony ? "rgba(139, 92, 246, 0.5)" : "rgba(148, 163, 184, 0.4)";
+        colonyCtx.lineWidth = 2;
+        colonyCtx.setLineDash([4, 4]);
+
+        // Left connector
+        colonyCtx.beginPath();
+        for (var li = 0; li < currentCol.streets.length; li++) {
+            var ln = currentCol.streets[li].nodes[0];
+            var ldx = ln.x * sc + offX;
+            var ldy = ln.y * sc + offY;
+            if (li === 0) colonyCtx.moveTo(ldx, ldy);
+            else colonyCtx.lineTo(ldx, ldy);
+        }
+        colonyCtx.stroke();
+
+        // Right connector
+        colonyCtx.beginPath();
+        for (var ri = 0; ri < currentCol.streets.length; ri++) {
+            var rs = currentCol.streets[ri];
+            var rn = rs.nodes[rs.nodes.length - 1];
+            var rdx = rn.x * sc + offX;
+            var rdy = rn.y * sc + offY;
+            if (ri === 0) colonyCtx.moveTo(rdx, rdy);
+            else colonyCtx.lineTo(rdx, rdy);
+        }
+        colonyCtx.stroke();
+        colonyCtx.setLineDash([]);
+
+        // Nodes for this colony
+        for (var sn = 0; sn < currentCol.streets.length; sn++) {
+            var street = currentCol.streets[sn];
+            for (var nn = 0; nn < street.nodes.length; nn++) {
+                var node = street.nodes[nn];
+                var ndx = node.x * sc + offX;
+                var ndy = node.y * sc + offY;
+
+                colonyCtx.fillStyle = isMainColony ? "#3b82f6" : "#94a3b8";
+                colonyCtx.beginPath();
+                colonyCtx.arc(ndx, ndy, nodeRadius, 0, Math.PI * 2);
+                colonyCtx.fill();
+
+                colonyCtx.strokeStyle = isMainColony ? "#1d4ed8" : "#64748b";
+                colonyCtx.lineWidth = 2;
+                colonyCtx.stroke();
+
+                if (isMainColony) {
+                    colonyCtx.fillStyle = "white";
+                    colonyCtx.font = "bold 8px Arial";
+                    colonyCtx.textAlign = "center";
+                    colonyCtx.textBaseline = "middle";
+                    colonyCtx.fillText((nn + 1).toString(), ndx, ndy);
+                }
+            }
+        }
+    }
+
+    // Draw connection lines between main colony and neighbors
+    colonyCtx.strokeStyle = "#f59e0b";
+    colonyCtx.lineWidth = 3;
+    colonyCtx.setLineDash([6, 3]);
+
+    // Left neighbor connections: main's 1st node ↔ left neighbor's 10th node
+    if (colony.leftNeighbor) {
+        for (var lci = 0; lci < colony.streets.length; lci++) {
+            var mainFirstNode = colony.streets[lci].nodes[0];
+            var neighborLastNode = colony.leftNeighbor.streets[lci].nodes[colony.leftNeighbor.streets[lci].nodes.length - 1];
+            
+            var x1 = mainFirstNode.x * sc + offX;
+            var y1 = mainFirstNode.y * sc + offY;
+            var x2 = neighborLastNode.x * sc + offX;
+            var y2 = neighborLastNode.y * sc + offY;
+            
+            colonyCtx.beginPath();
+            colonyCtx.moveTo(x1, y1);
+            colonyCtx.lineTo(x2, y2);
+            colonyCtx.stroke();
+            
+            // Draw connection indicator circles
+            colonyCtx.fillStyle = "#f59e0b";
+            colonyCtx.beginPath();
+            colonyCtx.arc(x1, y1, 8, 0, Math.PI * 2);
+            colonyCtx.fill();
+            colonyCtx.beginPath();
+            colonyCtx.arc(x2, y2, 8, 0, Math.PI * 2);
+            colonyCtx.fill();
+        }
+        
+        // Draw connection label
+        var labelX = (colony.streets[0].nodes[0].x * sc + offX + colony.leftNeighbor.streets[0].nodes[colony.leftNeighbor.streets[0].nodes.length - 1].x * sc + offX) / 2;
+        var labelY = colony.streets[0].nodes[0].y * sc + offY - 20;
+        colonyCtx.fillStyle = "#f59e0b";
+        colonyCtx.font = "bold 10px Arial";
+        colonyCtx.textAlign = "center";
+        colonyCtx.fillText("← Connection", labelX, labelY);
+    }
+
+    // Right neighbor connections: main's 10th node ↔ right neighbor's 1st node
+    if (colony.rightNeighbor) {
+        for (var rci = 0; rci < colony.streets.length; rci++) {
+            var mainLastNode = colony.streets[rci].nodes[colony.streets[rci].nodes.length - 1];
+            var neighborFirstNode = colony.rightNeighbor.streets[rci].nodes[0];
+            
+            var rx1 = mainLastNode.x * sc + offX;
+            var ry1 = mainLastNode.y * sc + offY;
+            var rx2 = neighborFirstNode.x * sc + offX;
+            var ry2 = neighborFirstNode.y * sc + offY;
+            
+            colonyCtx.beginPath();
+            colonyCtx.moveTo(rx1, ry1);
+            colonyCtx.lineTo(rx2, ry2);
+            colonyCtx.stroke();
+            
+            // Draw connection indicator circles
+            colonyCtx.fillStyle = "#f59e0b";
+            colonyCtx.beginPath();
+            colonyCtx.arc(rx1, ry1, 8, 0, Math.PI * 2);
+            colonyCtx.fill();
+            colonyCtx.beginPath();
+            colonyCtx.arc(rx2, ry2, 8, 0, Math.PI * 2);
+            colonyCtx.fill();
+        }
+        
+        // Draw connection label
+        var rLabelX = (colony.streets[0].nodes[colony.streets[0].nodes.length - 1].x * sc + offX + colony.rightNeighbor.streets[0].nodes[0].x * sc + offX) / 2;
+        var rLabelY = colony.streets[0].nodes[0].y * sc + offY - 20;
+        colonyCtx.fillStyle = "#f59e0b";
+        colonyCtx.font = "bold 10px Arial";
+        colonyCtx.textAlign = "center";
+        colonyCtx.fillText("Connection →", rLabelX, rLabelY);
+    }
+    
+    colonyCtx.setLineDash([]);
+
+    // Draw locations for all displayed colonies
+    for (var locCi = 0; locCi < coloniesToDraw.length; locCi++) {
+        var locCol = coloniesToDraw[locCi];
+        var isMain = (locCol === colony);
+        
+        for (var locI = 0; locI < locations.length; locI++) {
+            var loc = locations[locI];
+            if (loc.colony !== locCol.name) continue;
+            
+            var locX = loc.node.x * sc + offX;
+            var locY = loc.node.y * sc + offY;
+            var connX = loc.connectedStreetNode.x * sc + offX;
+            var connY = loc.connectedStreetNode.y * sc + offY;
+            
+            // Draw connection line to street node
+            colonyCtx.strokeStyle = isMain ? "rgba(16, 185, 129, 0.6)" : "rgba(148, 163, 184, 0.4)";
+            colonyCtx.lineWidth = 1;
+            colonyCtx.beginPath();
+            colonyCtx.moveTo(locX, locY);
+            colonyCtx.lineTo(connX, connY);
+            colonyCtx.stroke();
+            
+            // Draw location node with different colors based on type
+            var locColor, locIcon;
+            if (loc.type === "hospital") {
+                locColor = "#ef4444"; // red
+                locIcon = "🏥";
+            } else if (loc.type === "school") {
+                locColor = "#3b82f6"; // blue
+                locIcon = "🏫";
+            } else if (loc.type === "mall") {
+                locColor = "#f59e0b"; // amber
+                locIcon = "🏬";
+            } else {
+                locColor = isMain ? "#10b981" : "#94a3b8"; // green for homes
+                locIcon = "🏠";
+            }
+            
+            // Location node circle
+            colonyCtx.fillStyle = locColor;
+            colonyCtx.beginPath();
+            colonyCtx.arc(locX, locY, isMain ? 5 : 3, 0, Math.PI * 2);
+            colonyCtx.fill();
+            
+            // Only show labels for main colony and special locations
+            if (isMain && (loc.type !== "home" || false)) {
+                colonyCtx.fillStyle = locColor;
+                colonyCtx.font = "bold 8px Arial";
+                colonyCtx.textAlign = "center";
+                colonyCtx.fillText(loc.name, locX, locY - 8);
+            }
+        }
+    }
+
+    colonyCtx.textAlign = "left";
+    colonyCtx.textBaseline = "alphabetic";
+
+    // Legend with neighbor info
+    var legendText = "Each street: 200m | Spacing: 40m | 🏠 Home 🏥 Hospital 🏫 School 🏬 Mall";
+    if (colony.leftNeighbor || colony.rightNeighbor) {
+        legendText += " | Neighbors: ";
+        if (colony.leftNeighbor) legendText += "← " + colony.leftNeighbor.name;
+        if (colony.leftNeighbor && colony.rightNeighbor) legendText += ", ";
+        if (colony.rightNeighbor) legendText += colony.rightNeighbor.name + " →";
+    }
+    colonyCtx.fillStyle = "rgba(0,0,0,0.5)";
+    colonyCtx.font = "10px Arial";
+    colonyCtx.fillText(legendText, 10, ch - 10);
+}
+
+// Button handlers
+nodeBtn.onclick = function() {
+    mode = "node";
+    nodeBtn.classList.add("active");
+    streetBtn.classList.remove("active");
+    colonyBtn.classList.remove("active");
+    zoneBtn.classList.remove("active");
+    neighborBtn.classList.remove("active");
+    modeBadge.textContent = "🔵 Node Mode";
+};
+
+streetBtn.onclick = function() {
+    mode = "street";
+    streetBtn.classList.add("active");
+    nodeBtn.classList.remove("active");
+    colonyBtn.classList.remove("active");
+    zoneBtn.classList.remove("active");
+    neighborBtn.classList.remove("active");
+    modeBadge.textContent = "🛣️ Street Mode";
+};
+
+colonyBtn.onclick = function() {
+    mode = "colony";
+    colonyBtn.classList.add("active");
+    nodeBtn.classList.remove("active");
+    streetBtn.classList.remove("active");
+    zoneBtn.classList.remove("active");
+    neighborBtn.classList.remove("active");
+    modeBadge.textContent = "🏘️ Colony Mode";
+};
+
+zoneBtn.onclick = function() {
+    mode = "zone";
+    zoneBtn.classList.add("active");
+    nodeBtn.classList.remove("active");
+    streetBtn.classList.remove("active");
+    colonyBtn.classList.remove("active");
+    neighborBtn.classList.remove("active");
+    modeBadge.textContent = "🏙️ Zone Mode";
+};
+
+clearBtn.onclick = function() {
+    if (confirm("Clear everything?")) {
+        nodes = [];
+        edges = [];
+        streets = [];
+        colonies = [];
+        locations = [];
+        zones = [];
+        redraw();
+    }
+};
+
+exportBtn.onclick = function() {
+    var data = {
+        nodes: [],
+        edges: [],
+        streets: [],
+        colonies: []
+    };
+    for (var i = 0; i < nodes.length; i++) {
+        var cart = toCartesian(nodes[i].x, nodes[i].y);
+        data.nodes.push({ id: i, x: cart.x, y: cart.y });
+    }
+    for (var j = 0; j < edges.length; j++) {
+        data.edges.push({
+            from: nodes.indexOf(edges[j].a),
+            to: nodes.indexOf(edges[j].b),
+            distance: Math.round(calcDistance(edges[j].a, edges[j].b))
+        });
+    }
+    for (var k = 0; k < streets.length; k++) {
+        data.streets.push({ name: streets[k].name, nodeCount: streets[k].nodes.length });
+    }
+    for (var l = 0; l < colonies.length; l++) {
+        data.colonies.push({ name: colonies[l].name, streetCount: colonies[l].streets.length });
+    }
+    var blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "city-graph.json";
+    a.click();
+};
+
+// Helper function to find node info (colony, street, node number, zone)
+function getNodeInfo(node) {
+    // Check if it's a zone connector node
+    if (node.isConnector) {
+        var connectorIdx = zoneConnector.nodes.indexOf(node);
+        var coords = toCartesian(node.x, node.y);
+        return {
+            zone: "Highway Zone",
+            colony: "Zone Connector",
+            streetNo: 0,
+            streetName: "Zone Connector Highway",
+            nodeNo: connectorIdx + 1,
+            nodeId: "ZoneConnector_" + (node.zone ? node.zone.name : "Unknown") + "_N" + (connectorIdx + 1),
+            connectedZone: node.zone ? node.zone.name : "None"
+        };
+    }
+    
+    // Check colonies in zones first
+    for (var zi = 0; zi < zones.length; zi++) {
+        var zone = zones[zi];
+        for (var aci = 0; aci < zone.allColonies.length; aci++) {
+            var colony = zone.allColonies[aci];
+            for (var si = 0; si < colony.streets.length; si++) {
+                var street = colony.streets[si];
+                for (var ni = 0; ni < street.nodes.length; ni++) {
+                    if (street.nodes[ni] === node) {
+                        return {
+                            zone: zone.name,
+                            colony: colony.name,
+                            streetNo: si + 1,
+                            streetName: street.name,
+                            nodeNo: ni + 1,
+                            nodeId: zone.name + "_" + colony.name + "_S" + (si + 1) + "_N" + (ni + 1)
+                        };
+                    }
+                }
+            }
+        }
+    }
+    
+    // Check standalone colonies (not in zones)
+    for (var ci = 0; ci < colonies.length; ci++) {
+        var col = colonies[ci];
+        if (colonyInZone(col)) continue; // Skip colonies in zones
+        
+        for (var si2 = 0; si2 < col.streets.length; si2++) {
+            var st = col.streets[si2];
+            for (var ni2 = 0; ni2 < st.nodes.length; ni2++) {
+                if (st.nodes[ni2] === node) {
+                    return {
+                        zone: "No Zone",
+                        colony: col.name,
+                        streetNo: si2 + 1,
+                        streetName: st.name,
+                        nodeNo: ni2 + 1,
+                        nodeId: col.name + "_S" + (si2 + 1) + "_N" + (ni2 + 1)
+                    };
+                }
+            }
+        }
+    }
+    
+    // Not in a colony - check standalone streets
+    for (var ssi = 0; ssi < streets.length; ssi++) {
+        var sst = streets[ssi];
+        var inColony = false;
+        for (var cci = 0; cci < colonies.length; cci++) {
+            for (var csj = 0; csj < colonies[cci].streets.length; csj++) {
+                if (colonies[cci].streets[csj].name === sst.name) {
+                    inColony = true;
+                    break;
+                }
+            }
+            if (inColony) break;
+        }
+        if (!inColony) {
+            for (var sni = 0; sni < sst.nodes.length; sni++) {
+                if (sst.nodes[sni] === node) {
+                    return {
+                        zone: "No Zone",
+                        colony: "Standalone",
+                        streetNo: ssi + 1,
+                        streetName: sst.name,
+                        nodeNo: sni + 1,
+                        nodeId: "Standalone_" + sst.name + "_N" + (sni + 1)
+                    };
+                }
+            }
+        }
+    }
+    // Not in any street
+    var globalIdx = nodes.indexOf(node);
+    return {
+        zone: "No Zone",
+        colony: "None",
+        streetNo: 0,
+        streetName: "None",
+        nodeNo: globalIdx + 1,
+        nodeId: "Free_N" + (globalIdx + 1)
+    };
+}
+
+// Helper function to get all connected nodes with edge weights
+function getConnections(node) {
+    var connections = [];
+    for (var ei = 0; ei < edges.length; ei++) {
+        var e = edges[ei];
+        var connectedNode = null;
+        var edgeType = "Street Edge";
+        
+        if (e.isConnectorEdge) {
+            edgeType = "Zone Connector Highway";
+        } else if (e.isZoneConnection) {
+            edgeType = "Zone Connection";
+        }
+        
+        if (e.a === node) {
+            connectedNode = e.b;
+        } else if (e.b === node) {
+            connectedNode = e.a;
+        }
+        if (connectedNode) {
+            var connInfo = getNodeInfo(connectedNode);
+            var weight = Math.round(calcDistance(node, connectedNode));
+            var connCoords = toCartesian(connectedNode.x, connectedNode.y);
+            connections.push({
+                nodeId: connInfo.nodeId,
+                zone: connInfo.zone || "No Zone",
+                colony: connInfo.colony,
+                streetName: connInfo.streetName,
+                streetNo: connInfo.streetNo,
+                nodeNo: connInfo.nodeNo,
+                weight: weight,
+                edgeType: edgeType,
+                connX: connCoords.x,
+                connY: connCoords.y,
+                connectedZone: connInfo.connectedZone || "-"
+            });
+        }
+    }
+    return connections;
+}
+
+exportCsvBtn.onclick = function() {
+    var csvRows = [];
+    
+    // Header row with comprehensive columns
+    csvRows.push([
+        "Zone Name",
+        "Colony Name",
+        "Street No",
+        "Street Name",
+        "Node No",
+        "Node ID",
+        "X Coordinate (m)",
+        "Y Coordinate (m)",
+        "Connection Type",
+        "Connected To Zone",
+        "Connected To Colony",
+        "Connected To Street",
+        "Connected To Street No",
+        "Connected To Node No",
+        "Connected Node ID",
+        "Connected Node X (m)",
+        "Connected Node Y (m)",
+        "Edge Weight (m)"
+    ].join(","));
+    
+    // Process zones first
+    for (var zi = 0; zi < zones.length; zi++) {
+        var zone = zones[zi];
+        
+        // Process all colonies in zone
+        for (var aci = 0; aci < zone.allColonies.length; aci++) {
+            var colony = zone.allColonies[aci];
+            
+            for (var si = 0; si < colony.streets.length; si++) {
+                var street = colony.streets[si];
+                
+                for (var ni = 0; ni < street.nodes.length; ni++) {
+                    var node = street.nodes[ni];
+                    var coords = toCartesian(node.x, node.y);
+                    var nodeId = zone.name + "_" + colony.name + "_S" + (si + 1) + "_N" + (ni + 1);
+                    var connections = getConnections(node);
+                    
+                    if (connections.length === 0) {
+                        csvRows.push([
+                            '"' + zone.name + '"',
+                            '"' + colony.name + '"',
+                            si + 1,
+                            '"' + street.name + '"',
+                            ni + 1,
+                            '"' + nodeId + '"',
+                            coords.x,
+                            coords.y,
+                            '"-"',
+                            '"-"',
+                            '"-"',
+                            '"-"',
+                            '"-"',
+                            '"-"',
+                            '"-"',
+                            '"-"',
+                            '"-"',
+                            0
+                        ].join(","));
+                    } else {
+                        for (var cni = 0; cni < connections.length; cni++) {
+                            var conn = connections[cni];
+                            csvRows.push([
+                                '"' + zone.name + '"',
+                                '"' + colony.name + '"',
+                                si + 1,
+                                '"' + street.name + '"',
+                                ni + 1,
+                                '"' + nodeId + '"',
+                                coords.x,
+                                coords.y,
+                                '"' + conn.edgeType + '"',
+                                '"' + conn.zone + '"',
+                                '"' + conn.colony + '"',
+                                '"' + conn.streetName + '"',
+                                conn.streetNo,
+                                conn.nodeNo,
+                                '"' + conn.nodeId + '"',
+                                conn.connX,
+                                conn.connY,
+                                conn.weight
+                            ].join(","));
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // Process zone connector nodes (Highway Zone)
+    for (var zci = 0; zci < zoneConnector.nodes.length; zci++) {
+        var zcNode = zoneConnector.nodes[zci];
+        var zcCoords = toCartesian(zcNode.x, zcNode.y);
+        var zcNodeId = "ZoneConnector_" + (zcNode.zone ? zcNode.zone.name : "Unknown") + "_N" + (zci + 1);
+        var zcConnections = getConnections(zcNode);
+        
+        if (zcConnections.length === 0) {
+            csvRows.push([
+                '"Highway Zone"',
+                '"Zone Connector"',
+                0,
+                '"Zone Connector Highway"',
+                zci + 1,
+                '"' + zcNodeId + '"',
+                zcCoords.x,
+                zcCoords.y,
+                '"-"',
+                '"-"',
+                '"-"',
+                '"-"',
+                '"-"',
+                '"-"',
+                '"-"',
+                '"-"',
+                '"-"',
+                0
+            ].join(","));
+        } else {
+            for (var zcci = 0; zcci < zcConnections.length; zcci++) {
+                var zcConn = zcConnections[zcci];
+                csvRows.push([
+                    '"Highway Zone"',
+                    '"Zone Connector"',
+                    0,
+                    '"Zone Connector Highway"',
+                    zci + 1,
+                    '"' + zcNodeId + '"',
+                    zcCoords.x,
+                    zcCoords.y,
+                    '"' + zcConn.edgeType + '"',
+                    '"' + zcConn.zone + '"',
+                    '"' + zcConn.colony + '"',
+                    '"' + zcConn.streetName + '"',
+                    zcConn.streetNo,
+                    zcConn.nodeNo,
+                    '"' + zcConn.nodeId + '"',
+                    zcConn.connX,
+                    zcConn.connY,
+                    zcConn.weight
+                ].join(","));
+            }
+        }
+    }
+    
+    // Process standalone colonies (not in zones)
+    for (var ci = 0; ci < colonies.length; ci++) {
+        var scol = colonies[ci];
+        if (colonyInZone(scol)) continue; // Skip colonies in zones
+        
+        for (var ssi = 0; ssi < scol.streets.length; ssi++) {
+            var sstr = scol.streets[ssi];
+            
+            for (var sni = 0; sni < sstr.nodes.length; sni++) {
+                var snode = sstr.nodes[sni];
+                var scoords = toCartesian(snode.x, snode.y);
+                var snodeId = scol.name + "_S" + (ssi + 1) + "_N" + (sni + 1);
+                var sconnections = getConnections(snode);
+                
+                if (sconnections.length === 0) {
+                    csvRows.push([
+                        '"No Zone"',
+                        '"' + scol.name + '"',
+                        ssi + 1,
+                        '"' + sstr.name + '"',
+                        sni + 1,
+                        '"' + snodeId + '"',
+                        scoords.x,
+                        scoords.y,
+                        '"-"',
+                        '"-"',
+                        '"-"',
+                        '"-"',
+                        '"-"',
+                        '"-"',
+                        '"-"',
+                        '"-"',
+                        '"-"',
+                        0
+                    ].join(","));
+                } else {
+                    for (var scni = 0; scni < sconnections.length; scni++) {
+                        var sconn = sconnections[scni];
+                        csvRows.push([
+                            '"No Zone"',
+                            '"' + scol.name + '"',
+                            ssi + 1,
+                            '"' + sstr.name + '"',
+                            sni + 1,
+                            '"' + snodeId + '"',
+                            scoords.x,
+                            scoords.y,
+                            '"' + sconn.edgeType + '"',
+                            '"' + sconn.zone + '"',
+                            '"' + sconn.colony + '"',
+                            '"' + sconn.streetName + '"',
+                            sconn.streetNo,
+                            sconn.nodeNo,
+                            '"' + sconn.nodeId + '"',
+                            sconn.connX,
+                            sconn.connY,
+                            sconn.weight
+                        ].join(","));
+                    }
+                }
+            }
+        }
+    }
+    
+    var csvContent = csvRows.join("\n");
+    var blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "city-graph-nodes.csv";
+    a.click();
+};
+
+// Export locations to CSV
+exportLocBtn.onclick = function() {
+    var csvRows = [];
+    
+    // Header row with comprehensive columns
+    csvRows.push([
+        "Zone Name",
+        "Colony Name",
+        "Street No",
+        "Street Name",
+        "Location Name",
+        "Location Type",
+        "Location Node No (on street)",
+        "Location ID",
+        "X Coordinate (m)",
+        "Y Coordinate (m)",
+        "Connected To Zone",
+        "Connected To Colony",
+        "Connected To Street",
+        "Connected To Street No",
+        "Connected To Node No",
+        "Connected Street Node ID",
+        "Connected Node X (m)",
+        "Connected Node Y (m)",
+        "Edge Weight (m)"
+    ].join(","));
+    
+    // Helper to find zone for a colony
+    function getZoneForColony(colonyName) {
+        for (var zi = 0; zi < zones.length; zi++) {
+            for (var aci = 0; aci < zones[zi].allColonies.length; aci++) {
+                if (zones[zi].allColonies[aci].name === colonyName) {
+                    return zones[zi].name;
+                }
+            }
+        }
+        return "No Zone";
+    }
+    
+    // Process all locations
+    for (var li = 0; li < locations.length; li++) {
+        var loc = locations[li];
+        var coords = toCartesian(loc.node.x, loc.node.y);
+        var zoneName = getZoneForColony(loc.colony);
+        var locationId = (zoneName !== "No Zone" ? zoneName + "_" : "") + loc.colony + "_S" + loc.streetNo + "_Loc" + loc.nodeNo;
+        
+        // Get connected street node info
+        var connNodeInfo = getNodeInfo(loc.connectedStreetNode);
+        var connCoords = toCartesian(loc.connectedStreetNode.x, loc.connectedStreetNode.y);
+        var weight = Math.round(calcDistance(loc.node, loc.connectedStreetNode));
+        
+        csvRows.push([
+            '"' + zoneName + '"',
+            '"' + loc.colony + '"',
+            loc.streetNo,
+            '"' + loc.streetName + '"',
+            '"' + loc.name + '"',
+            '"' + loc.type + '"',
+            loc.nodeNo,
+            '"' + locationId + '"',
+            coords.x,
+            coords.y,
+            '"' + (connNodeInfo.zone || "No Zone") + '"',
+            '"' + connNodeInfo.colony + '"',
+            '"' + connNodeInfo.streetName + '"',
+            connNodeInfo.streetNo,
+            connNodeInfo.nodeNo,
+            '"' + connNodeInfo.nodeId + '"',
+            connCoords.x,
+            connCoords.y,
+            weight
+        ].join(","));
+    }
+    
+    var csvContent = csvRows.join("\n");
+    var blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "city-locations.csv";
+    a.click();
+};
+
+closeColonyBtn.onclick = closeColony;
+closeZoneBtn.onclick = closeZone;
+
+deleteColonyBtn.onclick = function() {
+    if (currentOpenColony) {
+        if (confirm("Delete colony '" + currentOpenColony.name + "' and all its nodes, edges, and streets?")) {
+            deleteColony(currentOpenColony);
+            closeColony();
+            currentOpenColony = null;
+        }
+    }
+};
+
+deleteZoneBtn.onclick = function() {
+    if (currentOpenZone) {
+        if (confirm("Delete zone '" + currentOpenZone.name + "' and all its colonies, nodes, edges, and streets?")) {
+            // Remove zone connector node
+            if (currentOpenZone.connectorNode) {
+                // Remove from zoneConnector.nodes
+                var cnIdx = zoneConnector.nodes.indexOf(currentOpenZone.connectorNode);
+                if (cnIdx > -1) {
+                    zoneConnector.nodes.splice(cnIdx, 1);
+                }
+                // Remove from main nodes
+                var nIdx = nodes.indexOf(currentOpenZone.connectorNode);
+                if (nIdx > -1) {
+                    nodes.splice(nIdx, 1);
+                }
+            }
+            
+            // Remove zone connections
+            var newZoneConnections = [];
+            for (var zci = 0; zci < zoneConnections.length; zci++) {
+                if (zoneConnections[zci].zone !== currentOpenZone) {
+                    newZoneConnections.push(zoneConnections[zci]);
+                } else {
+                    // Remove from main edges
+                    var eIdx = edges.indexOf(zoneConnections[zci]);
+                    if (eIdx > -1) {
+                        edges.splice(eIdx, 1);
+                    }
+                }
+            }
+            zoneConnections = newZoneConnections;
+            
+            // Rebuild connector edges
+            zoneConnector.edges = [];
+            // Remove old connector edges from main edges
+            var newEdges = [];
+            for (var ei = 0; ei < edges.length; ei++) {
+                if (!edges[ei].isConnectorEdge) {
+                    newEdges.push(edges[ei]);
+                }
+            }
+            edges = newEdges;
+            
+            // Create new connector edges
+            for (var ce = 0; ce < zoneConnector.nodes.length - 1; ce++) {
+                var connEdge = { 
+                    a: zoneConnector.nodes[ce], 
+                    b: zoneConnector.nodes[ce + 1], 
+                    isConnectorEdge: true 
+                };
+                zoneConnector.edges.push(connEdge);
+                edges.push(connEdge);
+            }
+            
+            // Delete all colonies in the zone
+            for (var i = 0; i < currentOpenZone.allColonies.length; i++) {
+                deleteColony(currentOpenZone.allColonies[i]);
+            }
+            // Remove zone from zones array
+            var zIdx = zones.indexOf(currentOpenZone);
+            if (zIdx > -1) {
+                zones.splice(zIdx, 1);
+            }
+            closeZone();
+            currentOpenZone = null;
+            redraw();
+        }
+    }
+};
+
+addNeighborFromOverlay.onclick = function() {
+    if (currentOpenColony) {
+        var side = prompt("Add neighbor on which side? (Enter 'left' or 'right'):");
+        if (side === 'left' || side === 'right') {
+            // Check if neighbor already exists on that side
+            if (side === 'left' && currentOpenColony.leftNeighbor) {
+                alert("A neighbor already exists on the left side!");
+                return;
+            }
+            if (side === 'right' && currentOpenColony.rightNeighbor) {
+                alert("A neighbor already exists on the right side!");
+                return;
+            }
+            var name = prompt("Enter neighbor colony name:");
+            if (name) {
+                createNeighborColony(currentOpenColony, side, name);
+                closeColony();
+            }
+        } else if (side) {
+            alert("Please enter 'left' or 'right'");
+        }
+    }
+};
+
+neighborBtn.onclick = function() {
+    mode = "neighbor";
+    neighborBtn.classList.add("active");
+    nodeBtn.classList.remove("active");
+    streetBtn.classList.remove("active");
+    colonyBtn.classList.remove("active");
+    zoneBtn.classList.remove("active");
+    selectedColonyForNeighbor = null;
+    modeBadge.textContent = "🏘️➡️🏘️ Neighbor Mode - Click a colony";
+};
+
+colonyOverlay.onclick = function(e) {
+    if (e.target === colonyOverlay) closeColony();
+};
+
+zoneOverlay.onclick = function(e) {
+    if (e.target === zoneOverlay) closeZone();
+};
+
+document.onkeydown = function(e) {
+    if (e.key === "Escape") {
+        closeColony();
+        closeZone();
+        // Also cancel neighbor selection
+        if (mode === "neighbor") {
+            selectedColonyForNeighbor = null;
+            modeBadge.textContent = "🏘️➡️🏘️ Neighbor Mode - Click a colony";
+        }
+    }
+    
+    // Handle L/R keys for neighbor mode
+    if (mode === "neighbor" && selectedColonyForNeighbor) {
+        var side = null;
+        if (e.key === "l" || e.key === "L") {
+            side = "left";
+        } else if (e.key === "r" || e.key === "R") {
+            side = "right";
+        }
+        
+        if (side) {
+            // Check if neighbor already exists on that side
+            if (side === "left" && selectedColonyForNeighbor.leftNeighbor) {
+                alert("A neighbor already exists on the left side!");
+                return;
+            }
+            if (side === "right" && selectedColonyForNeighbor.rightNeighbor) {
+                alert("A neighbor already exists on the right side!");
+                return;
+            }
+            
+            var name = prompt("Enter neighbor colony name:");
+            if (name) {
+                createNeighborColony(selectedColonyForNeighbor, side, name);
+                selectedColonyForNeighbor = null;
+                modeBadge.textContent = "🏘️➡️🏘️ Neighbor Mode - Click a colony";
+            }
+        }
+    }
+};
+
+// Mouse events
+canvas.onmousedown = function(e) {
+    var rect = canvas.getBoundingClientRect();
+    var x = e.clientX - rect.left;
+    var y = e.clientY - rect.top;
+
+    // Check zone click first (zones are shown as single icons)
+    var clickedZone = getZoneAt(x, y);
+    if (clickedZone) {
+        openZone(clickedZone);
+        return;
+    }
+
+    // Check colony click
+    var clickedColony = getColonyAt(x, y);
+    if (clickedColony) {
+        // Skip if colony is part of a zone (handled above)
+        if (colonyInZone(clickedColony)) {
+            return;
+        }
+        // Handle neighbor mode
+        if (mode === "neighbor") {
+            if (!selectedColonyForNeighbor) {
+                selectedColonyForNeighbor = clickedColony;
+                modeBadge.textContent = "🏘️➡️🏘️ Selected: " + clickedColony.name + " - Choose side (L/R key)";
+                alert("Colony '" + clickedColony.name + "' selected.\nPress 'L' for left neighbor or 'R' for right neighbor.");
+            }
+            return;
+        }
+        openColony(clickedColony);
+        return;
+    }
+
+    // Zone mode
+    if (mode === "zone") {
+        var zoneName = prompt("Enter zone name:");
+        if (!zoneName) return;
+        
+        var colonyPrefix = prompt("Enter colony name prefix (e.g., 'Colony' will create Colony-T1, Colony-M1, etc.):");
+        if (!colonyPrefix) colonyPrefix = zoneName;
+        
+        // Generate colony names for all 21 colonies
+        var colonyNames = {
+            top: [],
+            middle: [],
+            bottom: []
+        };
+        
+        for (var i = 1; i <= 7; i++) {
+            colonyNames.top.push(colonyPrefix + "-T" + i);
+            colonyNames.middle.push(colonyPrefix + "-M" + i);
+            colonyNames.bottom.push(colonyPrefix + "-B" + i);
+        }
+        
+        // Create the zone
+        createZone(zoneName, colonyNames, x, y);
+        
+        redraw();
+        alert("Zone '" + zoneName + "' created with 21 colonies!\n\nTop row: " + colonyNames.top.join(", ") + "\n\nMiddle row: " + colonyNames.middle.join(", ") + "\n\nBottom row: " + colonyNames.bottom.join(", "));
+        return;
+    }
+
+    // Colony mode
+    if (mode === "colony") {
+        var name = prompt("Enter colony name:");
+        if (!name) name = "Colony";
+
+        var streetCount = 6;
+        var streetLength = 200;
+        var nodeCount = 10;
+        var streetSpacing = 40;
+
+        var streetLengthPx = streetLength / SCALE;
+        var streetSpacingPx = streetSpacing / SCALE;
+        var nodeSpacingPx = streetLengthPx / (nodeCount - 1);
+
+        var colonyStreets = [];
+        var startNodes = [];
+        var endNodes = [];
+
+        for (var s = 0; s < streetCount; s++) {
+            var streetName = name + " - Street " + (s + 1);
+            var streetNodes = [];
+            var streetY = y + s * streetSpacingPx;
+
+            for (var i = 0; i < nodeCount; i++) {
+                var nx = x + i * nodeSpacingPx;
+                var n = { x: nx, y: streetY };
+                nodes.push(n);
+                streetNodes.push(n);
+            }
+
+            for (var j = 0; j < streetNodes.length - 1; j++) {
+                edges.push({ a: streetNodes[j], b: streetNodes[j + 1] });
+            }
+
+            streets.push({ name: streetName, nodes: streetNodes });
+            colonyStreets.push({ name: streetName, nodes: streetNodes });
+
+            startNodes.push(streetNodes[0]);
+            endNodes.push(streetNodes[streetNodes.length - 1]);
+        }
+
+        // Connect start and end nodes
+        for (var si = 0; si < startNodes.length - 1; si++) {
+            edges.push({ a: startNodes[si], b: startNodes[si + 1] });
+        }
+        for (var ei = 0; ei < endNodes.length - 1; ei++) {
+            edges.push({ a: endNodes[ei], b: endNodes[ei + 1] });
+        }
+
+        var bounds = {
+            x: x - 10,
+            y: y - 20,
+            w: streetLengthPx + 20,
+            h: (streetCount - 1) * streetSpacingPx + 40
+        };
+
+        var newColony = { name: name, streets: colonyStreets, bounds: bounds };
+        colonies.push(newColony);
+        
+        // Generate locations for this colony
+        generateLocationsForColony(newColony, colonyStreets, streetSpacingPx);
+        
+        redraw();
+        return;
+    }
+
+    // Street mode
+    if (mode === "street") {
+        var sname = prompt("Enter street name:");
+        if (!sname) sname = "Street";
+        var totalLength = 200;
+        var snodeCount = 10;
+        var spacingPx = (totalLength / SCALE) / (snodeCount - 1);
+        var angle = Math.random() * 2 * Math.PI;
+
+        var sNodes = [];
+        for (var si2 = 0; si2 < snodeCount; si2++) {
+            var snx = x + si2 * spacingPx * Math.cos(angle);
+            var sny = y - si2 * spacingPx * Math.sin(angle);
+            var sn = { x: snx, y: sny };
+            nodes.push(sn);
+            sNodes.push(sn);
+        }
+
+        for (var sj = 0; sj < sNodes.length - 1; sj++) {
+            edges.push({ a: sNodes[sj], b: sNodes[sj + 1] });
+        }
+
+        streets.push({ name: sname, nodes: sNodes });
+        redraw();
+        return;
+    }
+
+    // Node mode
+    var node = getNodeAt(x, y);
+
+    if (e.shiftKey && node) {
+        if (!edgeStartNode) {
+            edgeStartNode = node;
+        } else {
+            edges.push({ a: edgeStartNode, b: node });
+            edgeStartNode = null;
+            redraw();
+        }
+        return;
+    }
+
+    if (node) {
+        draggingNode = node;
+    } else {
+        nodes.push({ x: x, y: y });
+        redraw();
+    }
+};
+
+canvas.onmousemove = function(e) {
+    var rect = canvas.getBoundingClientRect();
+    var x = e.clientX - rect.left;
+    var y = e.clientY - rect.top;
+
+    var coords = toCartesian(x, y);
+    coordsEl.textContent = "X: " + coords.x + "m | Y: " + coords.y + "m";
+
+    var hoverZone = getZoneAt(x, y);
+    var hoverColony = getColonyAt(x, y);
+    var hoverNode = getNodeAt(x, y);
+
+    if (hoverZone) {
+        canvas.style.cursor = "pointer";
+    } else if (hoverColony && !colonyInZone(hoverColony)) {
+        canvas.style.cursor = "pointer";
+    } else if (hoverNode) {
+        canvas.style.cursor = "grab";
+    } else {
+        canvas.style.cursor = "crosshair";
+    }
+
+    if (draggingNode) {
+        canvas.style.cursor = "grabbing";
+        draggingNode.x = x;
+        draggingNode.y = y;
+        redraw();
+    }
+};
+
+canvas.onmouseup = function() {
+    draggingNode = null;
+};
+
+canvas.oncontextmenu = function(e) {
+    e.preventDefault();
+    var rect = canvas.getBoundingClientRect();
+    var x = e.clientX - rect.left;
+    var y = e.clientY - rect.top;
+
+    var node = getNodeAt(x, y);
+    if (node) {
+        var newEdges = [];
+        for (var i = 0; i < edges.length; i++) {
+            if (edges[i].a !== node && edges[i].b !== node) {
+                newEdges.push(edges[i]);
+            }
+        }
+        edges = newEdges;
+        
+        for (var j = 0; j < streets.length; j++) {
+            var newNodes = [];
+            for (var k = 0; k < streets[j].nodes.length; k++) {
+                if (streets[j].nodes[k] !== node) {
+                    newNodes.push(streets[j].nodes[k]);
+                }
+            }
+            streets[j].nodes = newNodes;
+        }
+        
+        var newNodesList = [];
+        for (var l = 0; l < nodes.length; l++) {
+            if (nodes[l] !== node) {
+                newNodesList.push(nodes[l]);
+            }
+        }
+        nodes = newNodesList;
+        redraw();
+        return;
+    }
+
+    var edge = getEdgeAt(x, y);
+    if (edge) {
+        var filteredEdges = [];
+        for (var m = 0; m < edges.length; m++) {
+            if (edges[m] !== edge) {
+                filteredEdges.push(edges[m]);
+            }
+        }
+        edges = filteredEdges;
+        redraw();
+    }
+};
+
+// Initial draw
+redraw();
+</script>
+</body>
+</html>
