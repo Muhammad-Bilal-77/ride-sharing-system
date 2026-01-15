@@ -1,4 +1,7 @@
 #include "city.h"
+#include <cstring>
+#include <fstream>
+#include <iostream>
 
 // Node constructor
 Node::Node() : streetNo(0), nodeNo(0), x(0.0), y(0.0), next(nullptr)
@@ -186,8 +189,18 @@ AdjListNode *City::findOrCreateAdjListNode(const char *nodeId)
 // Add undirected edge (adds both directions, grows dynamically)
 void City::addEdge(const char *fromId, const char *toId, double weight, const char *connType)
 {
-    // Add edge from -> to
+    // Add edge from -> to if it does not already exist
     AdjListNode *fromNode = findOrCreateAdjListNode(fromId);
+    EdgeNode *edgeWalk = fromNode->edges;
+    while (edgeWalk != nullptr)
+    {
+        if (strcmp(edgeWalk->toNodeId, toId) == 0)
+        {
+            // Edge already present; skip duplicate
+            return;
+        }
+        edgeWalk = edgeWalk->next;
+    }
 
     EdgeNode *newEdge = new EdgeNode();
     strcpy(newEdge->toNodeId, toId);
@@ -197,8 +210,18 @@ void City::addEdge(const char *fromId, const char *toId, double weight, const ch
     fromNode->edges = newEdge;
     edgeCount++;
 
-    // Add reverse edge to -> from (undirected graph)
+    // Add reverse edge to -> from (undirected graph) if missing
     AdjListNode *toNode = findOrCreateAdjListNode(toId);
+    EdgeNode *reverseWalk = toNode->edges;
+    while (reverseWalk != nullptr)
+    {
+        if (strcmp(reverseWalk->toNodeId, fromId) == 0)
+        {
+            // Reverse edge already present; done
+            return;
+        }
+        reverseWalk = reverseWalk->next;
+    }
 
     EdgeNode *reverseEdge = new EdgeNode();
     strcpy(reverseEdge->toNodeId, fromId);
@@ -346,13 +369,22 @@ bool City::loadPaths(const char *filePath)
             continue;
         }
 
+        // Check if "Connected To Zone" is "No Zone" - if so, skip this line
+        char connectedToZone[MAX_STRING_LENGTH];
+        strcpy(connectedToZone, fields[9]);
+        removeQuotes(connectedToZone);
+        if (strcmp(connectedToZone, "No Zone") == 0)
+        {
+            continue;
+        }
+
         removeQuotes(fields[5]);
         char fromNodeId[MAX_STRING_LENGTH];
         strcpy(fromNodeId, fields[5]);
 
-        removeQuotes(fields[15]);
+        removeQuotes(fields[14]);
         char toNodeId[MAX_STRING_LENGTH];
-        strcpy(toNodeId, fields[15]);
+        strcpy(toNodeId, fields[14]);
 
         removeQuotes(fields[8]);
         char connectionType[MAX_STRING_LENGTH];
@@ -364,7 +396,7 @@ bool City::loadPaths(const char *filePath)
             continue;
         }
 
-        // Create nodes if they don't exist (list grows dynamically)
+        // Create from node if it doesn't exist (list grows dynamically)
         if (getNode(fromNodeId) == nullptr)
         {
             Node *node = new Node();
@@ -395,6 +427,7 @@ bool City::loadPaths(const char *filePath)
             insertNode(node);
         }
 
+        // Create to node if it doesn't exist (list grows dynamically)
         if (getNode(toNodeId) == nullptr)
         {
             Node *node = new Node();
@@ -406,20 +439,20 @@ bool City::loadPaths(const char *filePath)
             removeQuotes(fields[10]);
             strcpy(node->colony, fields[10]);
 
-            removeQuotes(fields[11]);
-            strcpy(node->street, fields[11]);
-
             removeQuotes(fields[12]);
             node->streetNo = atoi(fields[12]);
+
+            removeQuotes(fields[11]);
+            strcpy(node->street, fields[11]);
 
             removeQuotes(fields[13]);
             node->nodeNo = atoi(fields[13]);
 
-            removeQuotes(fields[16]);
-            node->x = atof(fields[16]);
+            removeQuotes(fields[15]);
+            node->x = atof(fields[15]);
 
-            removeQuotes(fields[17]);
-            node->y = atof(fields[17]);
+            removeQuotes(fields[16]);
+            node->y = atof(fields[16]);
 
             strcpy(node->locationType, "street");
             insertNode(node);
@@ -535,6 +568,12 @@ void City::printNodeInfo(const Node *node) const
     std::cout << "Street: " << node->street << " (No. " << node->streetNo << ")" << std::endl;
     std::cout << "Location: " << node->locationName << " (" << node->locationType << ")" << std::endl;
     std::cout << "Coordinates: (" << node->x << ", " << node->y << ")" << std::endl;
+}
+
+// Get count of unique edges (undirected edges)
+int City::getUniqueEdgeCount() const
+{
+    return edgeCount / 2;
 }
 
 // Get first node in list (for iteration)

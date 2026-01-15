@@ -87,7 +87,8 @@ public:
 
     // Statistics
     int getNodeCount() const;
-    int getEdgeCount() const;
+    int getEdgeCount() const;           // Returns total directional edges (both forward and backward)
+    int getUniqueEdgeCount() const;     // Returns unique undirected edges (getEdgeCount / 2)
 
     // Display helper
     void printNodeInfo(const Node *node) const;
