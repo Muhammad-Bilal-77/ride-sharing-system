@@ -581,3 +581,254 @@ Node *City::getFirstNode() const
 {
     return nodeListHead;
 }
+
+// A* shortest path returning PathResult
+PathResult City::findShortestPathAStar(const char *startNodeId, const char *endNodeId) const
+{
+    PathResult result;
+
+    if (!startNodeId || !endNodeId || nodeCount <= 0)
+    {
+        return result;
+    }
+
+    // Build indexable array of nodes
+    int n = nodeCount;
+    Node **nodes = new Node *[n];
+    int idx = 0;
+    Node *curNode = nodeListHead;
+    while (curNode && idx < n)
+    {
+        nodes[idx++] = curNode;
+        curNode = curNode->next;
+    }
+    n = idx;
+    if (n == 0)
+    {
+        delete[] nodes;
+        return result;
+    }
+
+    // Linear search for node index by ID
+    auto findIndexById = [&](const char *id) -> int {
+        for (int i = 0; i < n; ++i)
+        {
+            if (std::strcmp(nodes[i]->id, id) == 0)
+                return i;
+        }
+        return -1;
+    };
+
+    int startIndex = findIndexById(startNodeId);
+    int goalIndex = findIndexById(endNodeId);
+    if (startIndex < 0 || goalIndex < 0)
+    {
+        delete[] nodes;
+        return result;
+    }
+
+    if (startIndex == goalIndex)
+    {
+        result.totalDistance = 0.0;
+        result.pathLength = 1;
+        std::strncpy(result.path[0], nodes[startIndex]->id, MAX_STRING_LENGTH - 1);
+        result.path[0][MAX_STRING_LENGTH - 1] = '\0';
+        delete[] nodes;
+        return result;
+    }
+
+    const double INF = 1e18;
+
+    double *gScore = new double[n];
+    double *fScore = new double[n];
+    int *parent = new int[n];
+    int *heap = new int[n];       // binary min-heap of node indices by fScore
+    int *heapPos = new int[n];     // position of node in heap, -1 if not in heap
+    char *inClosed = new char[n];  // 0/1 flag
+
+    for (int i = 0; i < n; ++i)
+    {
+        gScore[i] = INF;
+        fScore[i] = INF;
+        parent[i] = -1;
+        heapPos[i] = -1;
+        inClosed[i] = 0;
+    }
+
+    auto heuristic = [&](int i) -> double {
+        double dx = nodes[i]->x - nodes[goalIndex]->x;
+        double dy = nodes[i]->y - nodes[goalIndex]->y;
+        return std::sqrt(dx * dx + dy * dy);
+    };
+
+    // Heap helpers (min-heap on fScore)
+    auto heapSwap = [&](int a, int b) {
+        int tmp = heap[a];
+        heap[a] = heap[b];
+        heap[b] = tmp;
+        heapPos[heap[a]] = a;
+        heapPos[heap[b]] = b;
+    };
+
+    auto heapifyUp = [&](int i) {
+        while (i > 0)
+        {
+            int parentIdx = (i - 1) / 2;
+            if (fScore[heap[i]] < fScore[heap[parentIdx]])
+            {
+                heapSwap(i, parentIdx);
+                i = parentIdx;
+            }
+            else
+            {
+                break;
+            }
+        }
+    };
+
+    auto heapifyDown = [&](int i, int size) {
+        while (true)
+        {
+            int left = 2 * i + 1;
+            int right = 2 * i + 2;
+            int smallest = i;
+            if (left < size && fScore[heap[left]] < fScore[heap[smallest]])
+                smallest = left;
+            if (right < size && fScore[heap[right]] < fScore[heap[smallest]])
+                smallest = right;
+            if (smallest != i)
+            {
+                heapSwap(i, smallest);
+                i = smallest;
+            }
+            else
+            {
+                break;
+            }
+        }
+    };
+
+    int heapSize = 0;
+    gScore[startIndex] = 0.0;
+    fScore[startIndex] = heuristic(startIndex);
+    heap[heapSize] = startIndex;
+    heapPos[startIndex] = heapSize;
+    heapSize++;
+
+    bool found = false;
+
+    while (heapSize > 0)
+    {
+        int current = heap[0];
+        // Pop min
+        heap[0] = heap[heapSize - 1];
+        heapPos[heap[0]] = 0;
+        heapPos[current] = -1;
+        heapSize--;
+        if (heapSize > 0)
+            heapifyDown(0, heapSize);
+
+        if (current == goalIndex)
+        {
+            found = true;
+            break;
+        }
+
+        inClosed[current] = 1;
+
+        EdgeNode *edge = getNeighbors(nodes[current]->id);
+        while (edge)
+        {
+            int nei = findIndexById(edge->toNodeId);
+            if (nei >= 0)
+            {
+                if (inClosed[nei])
+                {
+                    edge = edge->next;
+                    continue;
+                }
+
+                double tentativeG = gScore[current] + edge->weight;
+                if (tentativeG < gScore[nei])
+                {
+                    parent[nei] = current;
+                    gScore[nei] = tentativeG;
+                    fScore[nei] = tentativeG + heuristic(nei);
+
+                    if (heapPos[nei] == -1)
+                    {
+                        heap[heapSize] = nei;
+                        heapPos[nei] = heapSize;
+                        heapSize++;
+                        heapifyUp(heapPos[nei]);
+                    }
+                    else
+                    {
+                        heapifyUp(heapPos[nei]);
+                    }
+                }
+            }
+            edge = edge->next;
+        }
+    }
+
+    if (!found)
+    {
+        delete[] nodes;
+        delete[] gScore;
+        delete[] fScore;
+        delete[] parent;
+        delete[] heap;
+        delete[] heapPos;
+        delete[] inClosed;
+        return result;
+    }
+
+    // Reconstruct path and check capacity (100 entries)
+    int length = 0;
+    for (int v = goalIndex; v != -1; v = parent[v])
+    {
+        length++;
+        if (v == startIndex)
+            break;
+    }
+
+    if (length > 100 || (parent[goalIndex] == -1 && goalIndex != startIndex))
+    {
+        delete[] nodes;
+        delete[] gScore;
+        delete[] fScore;
+        delete[] parent;
+        delete[] heap;
+        delete[] heapPos;
+        delete[] inClosed;
+        return result; // capacity issue or no chain
+    }
+
+    int *seq = new int[length];
+    int pos = length - 1;
+    for (int v = goalIndex; v != -1; v = parent[v])
+    {
+        seq[pos--] = v;
+        if (v == startIndex)
+            break;
+    }
+
+    result.totalDistance = gScore[goalIndex];
+    result.pathLength = length;
+    for (int i = 0; i < length; ++i)
+    {
+        std::strncpy(result.path[i], nodes[seq[i]]->id, MAX_STRING_LENGTH - 1);
+        result.path[i][MAX_STRING_LENGTH - 1] = '\0';
+    }
+
+    delete[] seq;
+    delete[] nodes;
+    delete[] gScore;
+    delete[] fScore;
+    delete[] parent;
+    delete[] heap;
+    delete[] heapPos;
+    delete[] inClosed;
+    return result;
+}

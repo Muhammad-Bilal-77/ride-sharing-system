@@ -9,6 +9,145 @@ void printSeparator()
               << std::endl;
 }
 
+// Manual Dijkstra (no STL) to cross-check A* output
+PathResult manualDijkstraShortestPath(const City &city, const char *startId, const char *goalId)
+{
+    PathResult res;
+
+    int n = city.getNodeCount();
+    if (!startId || !goalId || n <= 0)
+        return res;
+
+    Node **nodes = new Node *[n];
+    int idx = 0;
+    Node *cur = city.getFirstNode();
+    while (cur && idx < n)
+    {
+        nodes[idx++] = cur;
+        cur = cur->next;
+    }
+    n = idx;
+    if (n == 0)
+    {
+        delete[] nodes;
+        return res;
+    }
+
+    auto findIndexById = [&](const char *id) -> int {
+        for (int i = 0; i < n; ++i)
+        {
+            if (std::strcmp(nodes[i]->id, id) == 0)
+                return i;
+        }
+        return -1;
+    };
+
+    int s = findIndexById(startId);
+    int g = findIndexById(goalId);
+    if (s < 0 || g < 0)
+    {
+        delete[] nodes;
+        return res;
+    }
+
+    const double INF = 1e18;
+    double *dist = new double[n];
+    int *parent = new int[n];
+    char *visited = new char[n];
+    for (int i = 0; i < n; ++i)
+    {
+        dist[i] = INF;
+        parent[i] = -1;
+        visited[i] = 0;
+    }
+
+    dist[s] = 0.0;
+
+    for (int iter = 0; iter < n; ++iter)
+    {
+        int u = -1;
+        double best = INF;
+        for (int i = 0; i < n; ++i)
+        {
+            if (!visited[i] && dist[i] < best)
+            {
+                best = dist[i];
+                u = i;
+            }
+        }
+        if (u == -1 || u == g)
+            break;
+
+        visited[u] = 1;
+
+        EdgeNode *e = city.getNeighbors(nodes[u]->id);
+        while (e)
+        {
+            int v = findIndexById(e->toNodeId);
+            if (v >= 0 && !visited[v])
+            {
+                double nd = dist[u] + e->weight;
+                if (nd < dist[v])
+                {
+                    dist[v] = nd;
+                    parent[v] = u;
+                }
+            }
+            e = e->next;
+        }
+    }
+
+    if (dist[g] >= INF || (parent[g] == -1 && g != s))
+    {
+        delete[] nodes;
+        delete[] dist;
+        delete[] parent;
+        delete[] visited;
+        return res;
+    }
+
+    int len = 0;
+    for (int v = g; v != -1; v = parent[v])
+    {
+        len++;
+        if (v == s)
+            break;
+    }
+
+    if (len > 100)
+    {
+        delete[] nodes;
+        delete[] dist;
+        delete[] parent;
+        delete[] visited;
+        return res;
+    }
+
+    int *seq = new int[len];
+    int pos = len - 1;
+    for (int v = g; v != -1; v = parent[v])
+    {
+        seq[pos--] = v;
+        if (v == s)
+            break;
+    }
+
+    res.totalDistance = dist[g];
+    res.pathLength = len;
+    for (int i = 0; i < len; ++i)
+    {
+        std::strncpy(res.path[i], nodes[seq[i]]->id, MAX_STRING_LENGTH - 1);
+        res.path[i][MAX_STRING_LENGTH - 1] = '\0';
+    }
+
+    delete[] seq;
+    delete[] nodes;
+    delete[] dist;
+    delete[] parent;
+    delete[] visited;
+    return res;
+}
+
 // Get the paths.csv and city-locations.csv file paths
 std::string getDataFilePath(const std::string &filename)
 {
@@ -384,6 +523,178 @@ int main()
                 }
             }
         }
+    }
+    printSeparator();
+
+    // Test 14: Validate A* shortest path against manual Dijkstra (different zones via hospitals)
+    // First, collect hospitals by zone
+    const char *zone1Hospital = NULL, *zone2Hospital = NULL, *zone3Hospital = NULL, *zone4Hospital = NULL;
+    for (int i = 0; i < hospitalCount; ++i)
+    {
+        if (strcmp(hospitals[i]->zone, "zone1") == 0 && !zone1Hospital)
+            zone1Hospital = hospitals[i]->id;
+        else if (strcmp(hospitals[i]->zone, "zone2") == 0 && !zone2Hospital)
+            zone2Hospital = hospitals[i]->id;
+        else if (strcmp(hospitals[i]->zone, "zone3") == 0 && !zone3Hospital)
+            zone3Hospital = hospitals[i]->id;
+        else if (strcmp(hospitals[i]->zone, "zone4") == 0 && !zone4Hospital)
+            zone4Hospital = hospitals[i]->id;
+    }
+    
+    // Try zone transitions: 1->2->3->4
+    const char *startId = zone1Hospital ? zone1Hospital : (zone2Hospital ? zone2Hospital : zone4Hospital);
+    const char *goalId = zone2Hospital ? zone2Hospital : (zone3Hospital ? zone3Hospital : zone4Hospital);
+    
+    // Make sure start and goal are different
+    if (startId && goalId && strcmp(startId, goalId) == 0)
+    {
+        if (zone2Hospital && zone3Hospital && strcmp(zone2Hospital, zone3Hospital) != 0)
+        {
+            startId = zone2Hospital;
+            goalId = zone3Hospital;
+        }
+        else if (zone3Hospital && zone4Hospital && strcmp(zone3Hospital, zone4Hospital) != 0)
+        {
+            startId = zone3Hospital;
+            goalId = zone4Hospital;
+        }
+    }
+    
+    std::cout << "Test 14: Shortest path validation (Cross-zone)" << std::endl;
+    
+    // Find zone for start and goal
+    const char *startZone = "", *goalZone = "";
+    for (int i = 0; i < hospitalCount; ++i)
+    {
+        if (strcmp(hospitals[i]->id, startId) == 0) startZone = hospitals[i]->zone;
+        if (strcmp(hospitals[i]->id, goalId) == 0) goalZone = hospitals[i]->zone;
+    }
+    
+    std::cout << "Start Hospital: " << startId << " (Zone: " << startZone << ")" << std::endl;
+    std::cout << "Goal Hospital: " << goalId << " (Zone: " << goalZone << ")" << std::endl;
+
+    PathResult manualRes = manualDijkstraShortestPath(city, startId, goalId);
+    PathResult aStarRes = city.findShortestPathAStar(startId, goalId);
+
+    bool match = true;
+    if (manualRes.pathLength != aStarRes.pathLength)
+    {
+        match = false;
+    }
+    else
+    {
+        for (int i = 0; i < manualRes.pathLength; ++i)
+        {
+            if (std::strcmp(manualRes.path[i], aStarRes.path[i]) != 0)
+            {
+                match = false;
+                break;
+            }
+        }
+    }
+
+    double diff = (manualRes.totalDistance > aStarRes.totalDistance)
+                      ? (manualRes.totalDistance - aStarRes.totalDistance)
+                      : (aStarRes.totalDistance - manualRes.totalDistance);
+
+    std::cout << "Manual Dijkstra cost: " << manualRes.totalDistance << std::endl;
+    std::cout << "A* cost: " << aStarRes.totalDistance << std::endl;
+    std::cout << "Path length (manual/A*): " << manualRes.pathLength << "/" << aStarRes.pathLength << std::endl;
+
+    std::cout << "Manual path:" << std::endl;
+    for (int i = 0; i < manualRes.pathLength; ++i)
+    {
+        std::cout << "  " << manualRes.path[i] << std::endl;
+    }
+
+    std::cout << "A* path:" << std::endl;
+    for (int i = 0; i < aStarRes.pathLength; ++i)
+    {
+        std::cout << "  " << aStarRes.path[i] << std::endl;
+    }
+
+    if (match && diff < 1e-6)
+    {
+        std::cout << "✓ A* matches manual Dijkstra (cost and path)." << std::endl;
+    }
+    else if (manualRes.pathLength == 0 || aStarRes.pathLength == 0)
+    {
+        std::cout << "✗ One of the solvers could not find a path." << std::endl;
+    }
+    else
+    {
+        std::cout << "✗ Mismatch detected between A* and manual Dijkstra." << std::endl;
+    }
+    printSeparator();
+
+    // Test 15: Cross-zone pathfinding from zone 1 to zone 4
+    const char *zone1HospId = zone1Hospital;
+    const char *zone4HospId = zone4Hospital;
+    
+    std::cout << "Test 15: Shortest path validation (Zone 1 to Zone 4)" << std::endl;
+    
+    // Find zone names
+    const char *zone1Name = "", *zone4Name = "";
+    for (int i = 0; i < hospitalCount; ++i)
+    {
+        if (strcmp(hospitals[i]->id, zone1HospId) == 0) zone1Name = hospitals[i]->zone;
+        if (strcmp(hospitals[i]->id, zone4HospId) == 0) zone4Name = hospitals[i]->zone;
+    }
+    
+    std::cout << "Start Hospital: " << zone1HospId << " (Zone: " << zone1Name << ")" << std::endl;
+    std::cout << "Goal Hospital: " << zone4HospId << " (Zone: " << zone4Name << ")" << std::endl;
+
+    PathResult manualRes2 = manualDijkstraShortestPath(city, zone1HospId, zone4HospId);
+    PathResult aStarRes2 = city.findShortestPathAStar(zone1HospId, zone4HospId);
+
+    bool match2 = true;
+    if (manualRes2.pathLength != aStarRes2.pathLength)
+    {
+        match2 = false;
+    }
+    else
+    {
+        for (int i = 0; i < manualRes2.pathLength; ++i)
+        {
+            if (std::strcmp(manualRes2.path[i], aStarRes2.path[i]) != 0)
+            {
+                match2 = false;
+                break;
+            }
+        }
+    }
+
+    double diff2 = (manualRes2.totalDistance > aStarRes2.totalDistance)
+                       ? (manualRes2.totalDistance - aStarRes2.totalDistance)
+                       : (aStarRes2.totalDistance - manualRes2.totalDistance);
+
+    std::cout << "Manual Dijkstra cost: " << manualRes2.totalDistance << std::endl;
+    std::cout << "A* cost: " << aStarRes2.totalDistance << std::endl;
+    std::cout << "Path length (manual/A*): " << manualRes2.pathLength << "/" << aStarRes2.pathLength << std::endl;
+
+    std::cout << "Manual path:" << std::endl;
+    for (int i = 0; i < manualRes2.pathLength; ++i)
+    {
+        std::cout << "  " << manualRes2.path[i] << std::endl;
+    }
+
+    std::cout << "A* path:" << std::endl;
+    for (int i = 0; i < aStarRes2.pathLength; ++i)
+    {
+        std::cout << "  " << aStarRes2.path[i] << std::endl;
+    }
+
+    if (match2 && diff2 < 1e-6)
+    {
+        std::cout << "✓ A* matches manual Dijkstra (cost and path)." << std::endl;
+    }
+    else if (manualRes2.pathLength == 0 || aStarRes2.pathLength == 0)
+    {
+        std::cout << "✗ One of the solvers could not find a path." << std::endl;
+    }
+    else
+    {
+        std::cout << "✗ Mismatch detected between A* and manual Dijkstra." << std::endl;
     }
     printSeparator();
 

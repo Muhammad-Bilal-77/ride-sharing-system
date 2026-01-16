@@ -8,6 +8,14 @@
 
 const int MAX_STRING_LENGTH = 256;
 
+struct PathResult
+{
+    double totalDistance;                    // Shortest path cost; -1 if no path or overflow
+    char path[100][MAX_STRING_LENGTH];       // Ordered sequence of node IDs
+    int pathLength;                          // Number of nodes in path
+    PathResult() : totalDistance(-1.0), pathLength(0) {}
+};
+
 // Represents a node in the city graph
 struct Node
 {
@@ -84,6 +92,9 @@ public:
     // Utility methods
     double getDistance(const char *nodeId1, const char *nodeId2) const;
     Node *findNearestNode(double x, double y) const;
+
+    // A* shortest path (no STL). Returns PathResult with path and cost.
+    PathResult findShortestPathAStar(const char *startNodeId, const char *endNodeId) const;
 
     // Statistics
     int getNodeCount() const;
