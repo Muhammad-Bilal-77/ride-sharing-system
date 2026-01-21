@@ -5,6 +5,7 @@
 #include "driver.h"
 #include "rider.h"
 #include "trip.h"
+#include "rollbackmanager.h"
 
 // Structure to hold active trip information
 struct ActiveTrip
@@ -29,6 +30,7 @@ private:
     int maxTrips;
     
     ActiveTrip *activeTripsHead;  // Linked list of active trips
+    RollbackManager *rollbackManager;  // Integrated rollback system
     
     // Helper methods
     int findNearestAvailableDriver(const char *pickupNodeId, bool sameZone);
@@ -37,6 +39,11 @@ private:
     void addActiveTrip(Trip *trip, Driver *driver);
     void removeActiveTrip(int tripId);
     ActiveTrip *findActiveTrip(int tripId);
+    
+    // NEW: Location and validation helpers
+    const char *resolveRiderPickupNode(const char *riderNodeId);
+    bool validateDriverNode(const char *nodeId) const;
+    const char *findNearestRouteNode(double x, double y) const;
 
 public:
     DispatchEngine(City *c, int maxD = 50, int maxT = 100);
@@ -60,6 +67,13 @@ public:
     Trip *getTrip(int tripId) const;
     ActiveTrip *getActiveTripsHead() const;
     int getActiveTripsCount() const;
+    
+    // Movement simulation
+    bool startPickupMovement(int tripId);
+    bool advanceTripMovement(int tripId);  // Advances one step, returns true if more remain
+    
+    // Rollback access
+    RollbackManager *getRollbackManager() const;
     
     // Display
     void displayDrivers() const;

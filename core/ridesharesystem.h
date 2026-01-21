@@ -3,7 +3,6 @@
 
 #include "city.h"
 #include "dispatchengine.h"
-#include "rollbackmanager.h"
 
 // Analytics data structure (no STL)
 struct AnalyticsData
@@ -23,7 +22,6 @@ class RideShareSystem
 private:
     City *city;
     DispatchEngine *dispatchEngine;
-    RollbackManager *rollbackManager;
     int nextTripId;
     int nextRiderId;
 
@@ -44,7 +42,11 @@ public:
     bool completeTrip(int tripId);
     bool cancelTrip(int tripId);
 
-    // Rollback operations
+    // Movement simulation
+    bool startTripMovement(int tripId);  // Start pickup phase
+    bool advanceTrip(int tripId);        // Advance 1 step (1 second)
+
+    // Rollback operations (delegates to DispatchEngine)
     bool rollbackLastOperation();
     bool rollbackLastKOperations(int k);
 

@@ -86,7 +86,8 @@ CMakeLists.txt.user*
 VSCODE_SETUP.md
 QUICK_REFERENCE.md
 CONFIGURATION_COMPLETE.txt
-
+IMPLEMENTATION_GUIDE.md
+IMPLEMENTATION_SUMMARY.md
 # IDE and editor files
 .vscode/
 .idea/

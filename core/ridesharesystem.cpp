@@ -6,13 +6,11 @@ RideShareSystem::RideShareSystem(City *c)
     : city(c), nextTripId(1), nextRiderId(1)
 {
     dispatchEngine = new DispatchEngine(c, 100, 200);
-    rollbackManager = new RollbackManager(200);
 }
 
 RideShareSystem::~RideShareSystem()
 {
     delete dispatchEngine;
-    delete rollbackManager;
 }
 
 bool RideShareSystem::addDriver(int driverId, const char *nodeId, const char *zone)
@@ -39,9 +37,7 @@ bool RideShareSystem::assignTrip(int tripId, int driverId)
     if (!trip || !driver)
         return false;
 
-    // Record snapshot before assignment
-    rollbackManager->recordSnapshot(0, tripId, driverId, trip->getState(), driver->isAvailable());
-
+    // Snapshot recording now handled inside DispatchEngine::assignTrip
     if (!dispatchEngine->assignTrip(tripId, driverId))
         return false;
 
@@ -67,10 +63,7 @@ bool RideShareSystem::completeTrip(int tripId)
     if (!trip || !driver)
         return false;
 
-    // Record snapshot before completion
-    rollbackManager->recordSnapshot(2, tripId, trip->getDriverId(), 
-                                   trip->getState(), driver->isAvailable());
-
+    // Snapshot recording now handled inside DispatchEngine::completeTrip
     if (!dispatchEngine->completeTrip(tripId))
         return false;
 
@@ -87,10 +80,7 @@ bool RideShareSystem::cancelTrip(int tripId)
     if (!trip)
         return false;
 
-    // Record snapshot before cancellation
-    rollbackManager->recordSnapshot(1, tripId, trip->getDriverId(), 
-                                   trip->getState(), driver ? driver->isAvailable() : true);
-
+    // Snapshot recording now handled inside DispatchEngine::cancelTrip
     if (!dispatchEngine->cancelTrip(tripId))
         return false;
 
@@ -100,15 +90,16 @@ bool RideShareSystem::cancelTrip(int tripId)
 
 bool RideShareSystem::rollbackLastOperation()
 {
-    if (!rollbackManager->canRollback())
+    RollbackManager *rollback = dispatchEngine->getRollbackManager();
+    if (!rollback || !rollback->canRollback())
         return false;
 
     Trip **trips = new Trip *[dispatchEngine->getTripCount()];
     for (int i = 0; i < dispatchEngine->getTripCount(); i++)
         trips[i] = dispatchEngine->getTrip(i + 1);
 
-    bool result = rollbackManager->rollbackLast(trips, dispatchEngine->getTripCount(),
-                                               dispatchEngine);
+    bool result = rollback->rollbackLast(trips, dispatchEngine->getTripCount(),
+                                        dispatchEngine);
     delete[] trips;
 
     if (result)
@@ -119,15 +110,16 @@ bool RideShareSystem::rollbackLastOperation()
 
 bool RideShareSystem::rollbackLastKOperations(int k)
 {
-    if (!rollbackManager->canRollback())
+    RollbackManager *rollback = dispatchEngine->getRollbackManager();
+    if (!rollback || !rollback->canRollback())
         return false;
 
     Trip **trips = new Trip *[dispatchEngine->getTripCount()];
     for (int i = 0; i < dispatchEngine->getTripCount(); i++)
         trips[i] = dispatchEngine->getTrip(i + 1);
 
-    bool result = rollbackManager->rollbackLastK(k, trips, dispatchEngine->getTripCount(),
-                                                 dispatchEngine);
+    bool result = rollback->rollbackLastK(k, trips, dispatchEngine->getTripCount(),
+                                         dispatchEngine);
     delete[] trips;
 
     if (result)
@@ -204,7 +196,23 @@ void RideShareSystem::displaySystem() const
     dispatchEngine->displayDrivers();
     dispatchEngine->displayTrips();
     dispatchEngine->displayActiveTrips();
-    rollbackManager->displayHistory();
+    
+    RollbackManager *rollback = dispatchEngine->getRollbackManager();
+    if (rollback)
+        rollback->displayHistory();
+}
+
+bool RideShareSystem::startTripMovement(int tripId)
+{
+    bool result = dispatchEngine->startPickupMovement(tripId);
+    if (result)
+        std::cout << "[SYSTEM] Started movement simulation for Trip #" << tripId << std::endl;
+    return result;
+}
+
+bool RideShareSystem::advanceTrip(int tripId)
+{
+    return dispatchEngine->advanceTripMovement(tripId);
 }
 
 void RideShareSystem::displayAnalytics() const
