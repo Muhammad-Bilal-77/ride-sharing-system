@@ -46,6 +46,7 @@ public:
     const PathResult &getDriverToPickupPath() const;
     const PathResult &getPickupToDropoffPath() const;
     double getTotalDistance() const;
+    double getRideDistance() const;              // Distance rider actually travels (pickup->dropoff)
     int getCurrentPathIndex() const;
 
     // State transitions

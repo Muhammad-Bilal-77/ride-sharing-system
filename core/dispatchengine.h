@@ -57,6 +57,7 @@ public:
     // Trip management
     bool requestTrip(int tripId, int riderId, const char *pickupNodeId, 
                     const char *dropoffNodeId);
+    int assignNearestDriver(int tripId);
     bool assignTrip(int tripId, int driverId);
     bool startTrip(int tripId);
     bool completeTrip(int tripId);

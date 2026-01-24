@@ -23,6 +23,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(RideSharingSystem
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
+        riderwindow.h riderwindow.cpp
+        citymapview.h citymapview.cpp
         core/city.h core/city.cpp
         core/driver.h core/driver.cpp
         core/rider.h core/rider.cpp

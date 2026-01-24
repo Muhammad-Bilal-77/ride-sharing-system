@@ -58,7 +58,7 @@ bool DispatchEngine::addDriver(int driverId, const char *nodeId, const char *zon
     
     // Record snapshot for rollback (driver creation)
     // Operation type can be extended; for now using custom type 10 for driver_add
-    rollbackManager->recordSnapshot(10, -1, driverId, REQUESTED, true);
+    rollbackManager->recordSnapshot(10, -1, driverId, REQUESTED, true, nodeId);
     
     drivers[driverCount] = new Driver(driverId, nodeId, zone);
     driverCount++;
@@ -100,6 +100,17 @@ bool DispatchEngine::requestTrip(int tripId, int riderId, const char *pickupNode
     trips[tripCount] = new Trip(tripId, riderId, pickupNodeId, dropoffNodeId);
     tripCount++;
     return true;
+}
+
+int DispatchEngine::assignNearestDriver(int tripId)
+{
+    Trip *trip = getTrip(tripId);
+    if (!trip)
+        return -1;
+    int driverId = findNearestAvailableDriver(trip->getPickupNodeId(), true);
+    if (driverId < 0)
+        return -1;
+    return assignTrip(tripId, driverId) ? driverId : -1;
 }
 
 int DispatchEngine::findNearestAvailableDriver(const char *pickupNodeId, bool sameZone)
@@ -157,7 +168,7 @@ bool DispatchEngine::assignTrip(int tripId, int driverId)
         return false;
     
     // Record snapshot before assignment
-    rollbackManager->recordSnapshot(0, tripId, driverId, trip->getState(), driver->isAvailable());
+    rollbackManager->recordSnapshot(0, tripId, driverId, trip->getState(), driver->isAvailable(), driver->getCurrentNodeId());
     
     if (!trip->transitionToAssigned(driverId))
         return false;
@@ -178,6 +189,10 @@ bool DispatchEngine::assignTrip(int tripId, int driverId)
     PathResult riderPath = city->findShortestPathAStar(effectivePickupNode,
                                                       trip->getDropoffNodeId());
     trip->setPickupToDropoffPath(riderPath);
+    
+    // Record driver availability change snapshot (becoming unavailable)
+    rollbackManager->recordSnapshot(4, tripId, driverId, trip->getState(), 
+                                   true, driver->getCurrentNodeId(), -1, nullptr, false);
     
     driver->setAvailable(false);
     driver->setAssignedTripId(tripId);
@@ -204,9 +219,10 @@ bool DispatchEngine::completeTrip(int tripId)
     Driver *driver = getDriver(trip->getDriverId());
     if (driver)
     {
-        // Record snapshot before completion
+        // Record snapshot BEFORE any changes - capture current state
+        const char *currentDriverLocation = driver->getCurrentNodeId();
         rollbackManager->recordSnapshot(2, tripId, trip->getDriverId(), 
-                                      trip->getState(), driver->isAvailable());
+                          ONGOING, driver->isAvailable(), currentDriverLocation);
         
         // POLICY: Driver relocation after drop-off
         Node *dropNode = city->getNode(trip->getDropoffNodeId());
@@ -238,6 +254,10 @@ bool DispatchEngine::completeTrip(int tripId)
             }
         }
         
+        // Record driver availability change snapshot (becoming available after trip completion)
+        rollbackManager->recordSnapshot(4, tripId, driver->getDriverId(), COMPLETED, 
+                           false, currentDriverLocation, -1, nullptr, true);
+        
         driver->setAvailable(true);
         driver->setAssignedTripId(-1);
     }
@@ -255,9 +275,14 @@ bool DispatchEngine::cancelTrip(int tripId)
     Driver *driver = getDriver(trip->getDriverId());
     if (driver && driver->getAssignedTripId() == tripId)
     {
-        // Record snapshot before cancellation
+        // Record snapshot BEFORE cancellation - capture current state
+        const char *currentDriverLocation = driver->getCurrentNodeId();
         rollbackManager->recordSnapshot(1, tripId, trip->getDriverId(), 
-                                      trip->getState(), driver->isAvailable());
+                          trip->getState(), driver->isAvailable(), currentDriverLocation);
+        
+        // Record driver availability change snapshot (becoming available after cancellation)
+        rollbackManager->recordSnapshot(4, tripId, driver->getDriverId(), trip->getState(), 
+                           false, currentDriverLocation, -1, nullptr, true);
         
         driver->setAvailable(true);
         driver->setAssignedTripId(-1);
@@ -472,13 +497,14 @@ bool DispatchEngine::advanceTripMovement(int tripId)
         
         if (currentIndex >= path.pathLength - 1)
         {
+            // Record location change snapshot BEFORE moving
+            const char *currentDriverLocation = driver->getCurrentNodeId();
+            rollbackManager->recordSnapshot(11, tripId, driver->getDriverId(), 
+                                          trip->getState(), false, currentDriverLocation);
+            
             // Reached pickup location
             trip->setDriverCurrentNodeId(trip->getEffectivePickupNodeId());
             driver->setCurrentNodeId(trip->getEffectivePickupNodeId());
-            
-            // Record location change snapshot
-            rollbackManager->recordSnapshot(11, tripId, driver->getDriverId(), 
-                                          trip->getState(), false);
             
             // Transition to ONGOING
             trip->transitionToOngoing();
@@ -489,15 +515,17 @@ bool DispatchEngine::advanceTripMovement(int tripId)
         }
         else
         {
+            // Record movement snapshot BEFORE moving
+            const char *currentDriverLocation = driver->getCurrentNodeId();
+            rollbackManager->recordSnapshot(11, tripId, driver->getDriverId(), 
+                                          trip->getState(), false, currentDriverLocation);
+            
             // Move to next node
             currentIndex++;
             trip->setCurrentPathIndex(currentIndex);
             trip->setDriverCurrentNodeId(path.path[currentIndex]);
             driver->setCurrentNodeId(path.path[currentIndex]);
             
-            // Record movement snapshot
-            rollbackManager->recordSnapshot(11, tripId, driver->getDriverId(), 
-                                          trip->getState(), false);
             return true;
         }
     }
@@ -513,6 +541,11 @@ bool DispatchEngine::advanceTripMovement(int tripId)
         }
         else
         {
+            // Record movement snapshot BEFORE moving
+            const char *currentDriverLocation = driver->getCurrentNodeId();
+            rollbackManager->recordSnapshot(11, tripId, driver->getDriverId(), 
+                                          trip->getState(), false, currentDriverLocation);
+            
             // Move to next node
             currentIndex++;
             trip->setCurrentPathIndex(currentIndex);
@@ -520,9 +553,6 @@ bool DispatchEngine::advanceTripMovement(int tripId)
             trip->setRiderCurrentNodeId(path.path[currentIndex]);
             driver->setCurrentNodeId(path.path[currentIndex]);
             
-            // Record movement snapshot
-            rollbackManager->recordSnapshot(11, tripId, driver->getDriverId(), 
-                                          trip->getState(), false);
             return true;
         }
     }
