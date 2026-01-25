@@ -66,6 +66,11 @@ private:
     QLabel *currentLocationLabel;
     QPushButton *cancelRideButton;  // Button to cancel ride during pickup
     
+    // Map overlay elements
+    QLabel *mapLocationOverlay;
+    QWidget *mapLocationBox;
+    QPushButton *mapHoverButton;
+    
     bool usingSharedResources; // Track if using shared resources (don't delete them)
     
     // Auto-retry for driver requests

@@ -97,8 +97,8 @@ void RiderWindow::setupUI()
     QWidget *header = new QWidget();
     header->setStyleSheet(
         "background: qlineargradient(x1:0, y1:0, x2:0, y2:1, "
-        "stop:0 rgba(255,255,255,0.85), stop:1 rgba(255,255,255,0.65));"
-        "border-bottom: 1px solid rgba(46,125,50,0.15);"
+        "stop:0 #FFFFFF, stop:1 #F8FFFE);"
+        "border-bottom: 2px solid #E8F7F2;"
     );
     header->setFixedHeight(70);
     
@@ -106,25 +106,30 @@ void RiderWindow::setupUI()
     headerLayout->setContentsMargins(30, 15, 30, 15);
     
     // Back button
-    backButton = new QPushButton("Back", header);
+    backButton = new QPushButton("←", header);
     backButton->setCursor(Qt::PointingHandCursor);
     backButton->setStyleSheet(
         "QPushButton {"
-        "  background: rgba(255,255,255,0.8);"
-        "  color: #2E7D32;"
-        "  border: 1px solid rgba(46,125,50,0.25);"
+        "  background: #FFFFFF;"
+        "  color: #00A86B;"
+        "  border: 2px solid #E8F7F2;"
         "  border-radius: 10px;"
-        "  padding: 10px 14px;"
-        "  font-size: 14px;"
-        "  font-weight: 600;"
+        "  padding: 5px 10px;"
+        "  font-size: 20px;"
+        "  font-weight: 700;"
+        "  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;"
+        "  min-width: 38px;"
+        "  min-height: 32px;"
         "}"
         "QPushButton:hover {"
         "  background: qlineargradient(x1:0, y1:0, x2:0, y2:1,"
-        "    stop:0 rgba(255,255,255,0.95), stop:1 rgba(255,255,255,0.85));"
-        "  border: 1px solid rgba(76,175,80,0.4);"
+        "    stop:0 #F0FBF7, stop:1 #E8F7F2);"
+        "  border: 2px solid #00A86B;"
+        "  color: #00925E;"
         "}"
         "QPushButton:pressed {"
-        "  background: rgba(76,175,80,0.2);"
+        "  background: #E0F5ED;"
+        "  border: 2px solid #008C5A;"
         "}"
     );
     connect(backButton, &QPushButton::clicked, this, [this]() {
@@ -135,104 +140,50 @@ void RiderWindow::setupUI()
     mapButton->setCursor(Qt::PointingHandCursor);
     mapButton->setStyleSheet(
         "QPushButton {"
-        "  background: #2E7D32;"
-        "  color: white;"
+        "  background: qlineargradient(x1:0, y1:0, x2:0, y2:1, "
+        "    stop:0 #00A86B, stop:1 #00925E);"
+        "  color: #FFFFFF;"
         "  border: none;"
         "  border-radius: 10px;"
-        "  padding: 10px 18px;"
+        "  padding: 6px 12px;"
         "  font-size: 14px;"
-        "  font-weight: 700;"
-        "  letter-spacing: 0.3px;"
+        "  font-weight: 600;"
+        "  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;"
+        "  letter-spacing: 0.5px;"
+        "  min-height: 32px;"
+        "  box-shadow: 0 2px 8px rgba(0, 168, 107, 0.2);"
         "}"
         "QPushButton:hover {"
-        "  background: #388E3C;"
+        "  background: qlineargradient(x1:0, y1:0, x2:0, y2:1, "
+        "    stop:0 #00BA7A, stop:1 #00A86B);"
+        "  box-shadow: 0 4px 12px rgba(0, 168, 107, 0.3);"
         "}"
         "QPushButton:pressed {"
-        "  background: #1B5E20;"
+        "  background: qlineargradient(x1:0, y1:0, x2:0, y2:1, "
+        "    stop:0 #008C5A, stop:1 #007A4E);"
+        "  box-shadow: 0 1px 4px rgba(0, 168, 107, 0.25);"
         "}"
     );
     connect(mapButton, &QPushButton::clicked, this, &RiderWindow::onMapButtonClick);
 
     headerLayout->addWidget(backButton, 0, Qt::AlignLeft);
-    headerLayout->addWidget(mapButton, 0, Qt::AlignLeft);
     headerLayout->addStretch(1);
     
     // Welcome message (center)
     welcomeLabel = new QLabel(QString("Welcome, %1 !").arg(riderId), header);
     welcomeLabel->setStyleSheet(
-        "color: #1B5E20;"
+        "color: #00A86B;"
         "font-size: 24px;"
-        "font-weight: 500;"
-        "font-family: 'Segoe UI', Arial, sans-serif;"
+        "font-weight: 600;"
+        "font-family: 'Inter', 'Segoe UI', Arial, sans-serif;"
         "letter-spacing: 0.5px;"
         "background: transparent;"
     );
     welcomeLabel->setAlignment(Qt::AlignCenter);
     headerLayout->addWidget(welcomeLabel, 2);
     
-    // Right spacer before profile
     headerLayout->addStretch(1);
-    
-    // Profile image container with wrapper for better styling
-    QWidget *profileContainer = new QWidget(header);
-    profileContainer->setFixedSize(56, 56);
-    profileContainer->setStyleSheet("background: transparent;");
-    
-    QVBoxLayout *profileContainerLayout = new QVBoxLayout(profileContainer);
-    profileContainerLayout->setContentsMargins(0, 0, 0, 0);
-    
-    // Profile image (right corner)
-    profileImageLabel = new QLabel(profileContainer);
-    profileImageLabel->setAlignment(Qt::AlignCenter);
-    profileImageLabel->setFixedSize(56, 56);
-    profileImageLabel->setStyleSheet(
-        "border: 3px solid qlineargradient(x1:0, y1:0, x2:1, y2:1, "
-        "  stop:0 rgba(76,175,80,0.6), stop:1 rgba(46,125,50,0.4));"
-        "border-radius: 28px;"
-        "background: qlineargradient(x1:0, y1:0, x2:1, y2:1, "
-        "  stop:0 #FFFFFF, stop:1 #F1F8F4);"
-        "padding: 2px;"
-    );
-    
-    // Load user profile image using portable resource manager
-    QString imgPath = ResourceManager::getResourcePath("user1.png");
-    
-    if (!imgPath.isEmpty()) {
-        QPixmap pixmap(imgPath);
-        if (!pixmap.isNull()) {
-            // Create rounded pixmap
-            QPixmap rounded(56, 56);
-            rounded.fill(Qt::transparent);
-            QPainter painter(&rounded);
-            painter.setRenderHint(QPainter::Antialiasing);
-            painter.setRenderHint(QPainter::SmoothPixmapTransform);
-            
-            QPainterPath path;
-            path.addEllipse(0, 0, 56, 56);
-            painter.setClipPath(path);
-            painter.drawPixmap(0, 0, 56, 56, pixmap);
-            
-            profileImageLabel->setPixmap(rounded);
-        }
-    } else {
-        qDebug() << "user1.png not found";
-        profileImageLabel->setText("👤");
-        profileImageLabel->setStyleSheet(
-            profileImageLabel->styleSheet() + 
-            "font-size: 28px; color: #2E7D32;"
-        );
-    }
-    
-    // Add shadow effect to profile image
-    QGraphicsDropShadowEffect *profileShadow = new QGraphicsDropShadowEffect();
-    profileShadow->setBlurRadius(15);
-    profileShadow->setXOffset(0);
-    profileShadow->setYOffset(2);
-    profileShadow->setColor(QColor(0, 0, 0, 60));
-    profileImageLabel->setGraphicsEffect(profileShadow);
-    
-    profileContainerLayout->addWidget(profileImageLabel);
-    headerLayout->addWidget(profileContainer);
+    headerLayout->addWidget(mapButton, 0, Qt::AlignRight);
     
     mainLayout->addWidget(header);
     
@@ -267,71 +218,78 @@ void RiderWindow::setupUI()
 void RiderWindow::createSidebar(QWidget *parent)
 {
     QWidget *sidebar = new QWidget(parent);
-    sidebar->setFixedWidth(220);
+    sidebar->setFixedWidth(240);
     sidebar->setStyleSheet(
         "QWidget {"
-        "  background: qlineargradient(x1:0, y1:0, x2:1, y2:0, "
-        "    stop:0 rgba(255,255,255,0.9), stop:1 rgba(232,245,233,0.7));"
-        "  border-right: 1px solid rgba(46,125,50,0.15);"
+        "  background: qlineargradient(x1:0, y1:0, x2:0, y2:1, "
+        "    stop:0 #FFFFFF, stop:1 #F8FFFE);"
+        "  border-right: 2px solid #E8F7F2;"
+        "  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;"
         "}"
     );
     
     QVBoxLayout *sidebarLayout = new QVBoxLayout(sidebar);
-    sidebarLayout->setContentsMargins(15, 20, 15, 20);
-    sidebarLayout->setSpacing(10);
+    sidebarLayout->setContentsMargins(12, 24, 12, 24);
+    sidebarLayout->setSpacing(8);
     
     // Book Ride button
-    bookRideButton = new QPushButton("📍  Book Ride", sidebar);
+    bookRideButton = new QPushButton("Book Ride", sidebar);
     bookRideButton->setStyleSheet(
         "QPushButton {"
         "  background: qlineargradient(x1:0, y1:0, x2:0, y2:1, "
-        "    stop:0 #4CAF50, stop:1 #45A049);"
-        "  color: white;"
+        "    stop:0 #00A86B, stop:1 #00925E);"
+        "  color: #FFFFFF;"
         "  border: none;"
-        "  border-radius: 12px;"
-        "  padding: 16px 18px;"
+        "  border-radius: 10px;"
+        "  padding: 18px 20px;"
         "  font-size: 15px;"
         "  font-weight: 600;"
         "  text-align: left;"
-        "  letter-spacing: 0.3px;"
+        "  letter-spacing: 0.5px;"
+        "  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;"
+        "  box-shadow: 0 4px 12px rgba(0, 168, 107, 0.25);"
         "}"
         "QPushButton:hover {"
         "  background: qlineargradient(x1:0, y1:0, x2:0, y2:1, "
-        "    stop:0 rgba(255,255,255,0.95), stop:1 rgba(255,255,255,0.85));"
-        "  color: #2E7D32;"
-        "  border: 1px solid rgba(76,175,80,0.4);"
-        "  backdrop-filter: blur(10px);"
+        "    stop:0 #00BA7A, stop:1 #00A86B);"
+        "  box-shadow: 0 6px 20px rgba(0, 168, 107, 0.35);"
+        "  transform: translateY(-2px);"
         "}"
         "QPushButton:pressed {"
         "  background: qlineargradient(x1:0, y1:0, x2:0, y2:1, "
-        "    stop:0 #388E3C, stop:1 #2E7D32);"
+        "    stop:0 #008C5A, stop:1 #007A4E);"
+        "  box-shadow: 0 2px 8px rgba(0, 168, 107, 0.3);"
         "}"
     );
     bookRideButton->setCursor(Qt::PointingHandCursor);
     
     // History button
-    historyButton = new QPushButton("📜  History", sidebar);
+    historyButton = new QPushButton("History", sidebar);
     historyButton->setStyleSheet(
         "QPushButton {"
-        "  background: rgba(255,255,255,0.6);"
-        "  color: #2E7D32;"
-        "  border: 1px solid rgba(46,125,50,0.2);"
-        "  border-radius: 12px;"
-        "  padding: 16px 18px;"
+        "  background: #FFFFFF;"
+        "  color: #00A86B;"
+        "  border: 2px solid #E8F7F2;"
+        "  border-radius: 10px;"
+        "  padding: 18px 20px;"
         "  font-size: 15px;"
         "  font-weight: 600;"
         "  text-align: left;"
-        "  letter-spacing: 0.3px;"
+        "  letter-spacing: 0.5px;"
+        "  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;"
+        "  box-shadow: 0 2px 8px rgba(0, 168, 107, 0.08);"
         "}"
         "QPushButton:hover {"
         "  background: qlineargradient(x1:0, y1:0, x2:0, y2:1, "
-        "    stop:0 rgba(255,255,255,0.95), stop:1 rgba(255,255,255,0.85));"
-        "  border: 1px solid rgba(76,175,80,0.4);"
-        "  color: #1B5E20;"
-        "  backdrop-filter: blur(10px);"
+        "    stop:0 #F0FBF7, stop:1 #E8F7F2);"
+        "  border: 2px solid #00A86B;"
+        "  color: #00925E;"
+        "  box-shadow: 0 4px 16px rgba(0, 168, 107, 0.15);"
         "}"
         "QPushButton:pressed {"
-        "  background: rgba(76,175,80,0.25);"
+        "  background: #E0F5ED;"
+        "  border: 2px solid #008C5A;"
+        "  box-shadow: 0 1px 4px rgba(0, 168, 107, 0.2);"
         "}"
     );
     historyButton->setCursor(Qt::PointingHandCursor);
@@ -346,35 +304,39 @@ void RiderWindow::createSidebar(QWidget *parent)
         bookRideButton->setStyleSheet(
             "QPushButton {"
             "  background: qlineargradient(x1:0, y1:0, x2:0, y2:1, "
-            "    stop:0 #4CAF50, stop:1 #45A049);"
-            "  color: white;"
+            "    stop:0 #00A86B, stop:1 #00925E);"
+            "  color: #FFFFFF;"
             "  border: none;"
-            "  border-radius: 12px;"
-            "  padding: 16px 18px;"
+            "  border-radius: 10px;"
+            "  padding: 18px 20px;"
             "  font-size: 15px;"
             "  font-weight: 600;"
             "  text-align: left;"
-            "  letter-spacing: 0.3px;"
+            "  letter-spacing: 0.5px;"
+            "  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;"
+            "  box-shadow: 0 4px 12px rgba(0, 168, 107, 0.25);"
             "}"
         );
         historyButton->setStyleSheet(
             "QPushButton {"
-            "  background: rgba(255,255,255,0.6);"
-            "  color: #2E7D32;"
-            "  border: 1px solid rgba(46,125,50,0.2);"
-            "  border-radius: 12px;"
-            "  padding: 16px 18px;"
+            "  background: #FFFFFF;"
+            "  color: #00A86B;"
+            "  border: 2px solid #E8F7F2;"
+            "  border-radius: 10px;"
+            "  padding: 18px 20px;"
             "  font-size: 15px;"
             "  font-weight: 600;"
             "  text-align: left;"
-            "  letter-spacing: 0.3px;"
+            "  letter-spacing: 0.5px;"
+            "  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;"
+            "  box-shadow: 0 2px 8px rgba(0, 168, 107, 0.08);"
             "}"
             "QPushButton:hover {"
             "  background: qlineargradient(x1:0, y1:0, x2:0, y2:1, "
-            "    stop:0 rgba(255,255,255,0.95), stop:1 rgba(255,255,255,0.85));"
-            "  border: 1px solid rgba(76,175,80,0.4);"
-            "  color: #1B5E20;"
-            "  backdrop-filter: blur(10px);"
+            "    stop:0 #F0FBF7, stop:1 #E8F7F2);"
+            "  border: 2px solid #00A86B;"
+            "  color: #00925E;"
+            "  box-shadow: 0 4px 16px rgba(0, 168, 107, 0.15);"
             "}"
         );
     });
@@ -384,35 +346,39 @@ void RiderWindow::createSidebar(QWidget *parent)
         historyButton->setStyleSheet(
             "QPushButton {"
             "  background: qlineargradient(x1:0, y1:0, x2:0, y2:1, "
-            "    stop:0 #4CAF50, stop:1 #45A049);"
-            "  color: white;"
+            "    stop:0 #00A86B, stop:1 #00925E);"
+            "  color: #FFFFFF;"
             "  border: none;"
-            "  border-radius: 12px;"
-            "  padding: 16px 18px;"
+            "  border-radius: 10px;"
+            "  padding: 18px 20px;"
             "  font-size: 15px;"
             "  font-weight: 600;"
             "  text-align: left;"
-            "  letter-spacing: 0.3px;"
+            "  letter-spacing: 0.5px;"
+            "  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;"
+            "  box-shadow: 0 4px 12px rgba(0, 168, 107, 0.25);"
             "}"
         );
         bookRideButton->setStyleSheet(
             "QPushButton {"
-            "  background: rgba(255,255,255,0.6);"
-            "  color: #2E7D32;"
-            "  border: 1px solid rgba(46,125,50,0.2);"
-            "  border-radius: 12px;"
-            "  padding: 16px 18px;"
+            "  background: #FFFFFF;"
+            "  color: #00A86B;"
+            "  border: 2px solid #E8F7F2;"
+            "  border-radius: 10px;"
+            "  padding: 18px 20px;"
             "  font-size: 15px;"
             "  font-weight: 600;"
             "  text-align: left;"
-            "  letter-spacing: 0.3px;"
+            "  letter-spacing: 0.5px;"
+            "  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;"
+            "  box-shadow: 0 2px 8px rgba(0, 168, 107, 0.08);"
             "}"
             "QPushButton:hover {"
             "  background: qlineargradient(x1:0, y1:0, x2:0, y2:1, "
-            "    stop:0 rgba(255,255,255,0.95), stop:1 rgba(255,255,255,0.85));"
-            "  border: 1px solid rgba(76,175,80,0.4);"
-            "  color: #1B5E20;"
-            "  backdrop-filter: blur(10px);"
+            "    stop:0 #F0FBF7, stop:1 #E8F7F2);"
+            "  border: 2px solid #00A86B;"
+            "  color: #00925E;"
+            "  box-shadow: 0 4px 16px rgba(0, 168, 107, 0.15);"
             "}"
         );
     });
@@ -461,118 +427,251 @@ QWidget* RiderWindow::createBookRidePage()
     // Content widget inside scroll area
     QWidget *scrollContent = new QWidget();
     scrollContent->setStyleSheet("background: transparent;");
-    scrollContent->setMaximumWidth(650);
+    // Set overall page width to 700
+    scrollContent->setMaximumWidth(700);
     scrollContent->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     
     QVBoxLayout *mainLayout = new QVBoxLayout(scrollContent);
     mainLayout->setContentsMargins(30, 25, 30, 25);
     mainLayout->setSpacing(20);
     
-    // ===== SECTION 1: Current Location Display Card =====
-    QWidget *currentLocationCard = new QWidget();
-    currentLocationCard->setMinimumHeight(100);
-    currentLocationCard->setStyleSheet(
-        "background: qlineargradient(x1:0, y1:0, x2:1, y2:1, "
-        "  stop:0 rgba(76,175,80,0.15), stop:1 rgba(46,125,50,0.1));"
-        "border: 2px solid rgba(46,125,50,0.3);"
-        "border-radius: 14px;"
-        "padding: 20px 22px;"
+    // ===== Book a Ride Card =====
+    QWidget *bookRideCard = new QWidget();
+    bookRideCard->setMinimumHeight(500);
+    bookRideCard->setStyleSheet(
+        "QWidget {"
+        "  background: #FFFFFF;"
+        "  border: 2px solid #E8F7F2;"
+        "  border-radius: 20px;"
+        "  padding: 24px;"
+        "  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);"
+        "}"
     );
-    QVBoxLayout *locCardLayout = new QVBoxLayout(currentLocationCard);
-    locCardLayout->setContentsMargins(0, 0, 0, 0);
-    locCardLayout->setSpacing(10);
     
-    QLabel *locTitle = new QLabel("📍 Your Current Location");
-    locTitle->setStyleSheet(
-        "color: #1B5E20;"
-        "font-size: 14px;"
-        "font-weight: 700;"
-        "letter-spacing: 0.5px;"
+    QVBoxLayout *cardLayout = new QVBoxLayout(bookRideCard);
+    cardLayout->setContentsMargins(24, 24, 24, 24);
+    cardLayout->setSpacing(0);
+    
+    // Heading
+    QLabel *headingLabel = new QLabel("Book a ride");
+    headingLabel->setStyleSheet(
         "background: transparent;"
-    );
-    
-    currentLocationLabel = new QLabel(locationId);
-    currentLocationLabel->setMinimumHeight(50);
-    currentLocationLabel->setStyleSheet(
-        "color: #2E7D32;"
-        "font-size: 17px;"
+        "color: #000000;"
+        "font-size: 32px;"
         "font-weight: 600;"
-        "background: rgba(255,255,255,0.5);"
-        "border-radius: 10px;"
-        "padding: 12px 14px;"
-        "border: 1px solid rgba(76,175,80,0.2);"
-    );
-    currentLocationLabel->setWordWrap(true);
-    
-    locCardLayout->addWidget(locTitle);
-    locCardLayout->addWidget(currentLocationLabel);
-    mainLayout->addWidget(currentLocationCard);
-    
-    // ===== SECTION 2: Map Preview Card =====
-    QWidget *mapCard = new QWidget();
-    mapCard->setMinimumHeight(220);
-    mapCard->setMaximumHeight(220);
-    mapCard->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    mapCard->setStyleSheet(
-        "background: white;"
-        "border: 2px solid rgba(76,175,80,0.2);"
-        "border-radius: 16px;"
+        "font-family: 'Inter', 'Segoe UI', Arial, sans-serif;"
+        "letter-spacing: -0.5px;"
+        "border: none;"
+        "padding: 0px;"
     );
     
-    QVBoxLayout *mapCardLayout = new QVBoxLayout(mapCard);
-    mapCardLayout->setContentsMargins(4, 4, 4, 4);
+    // Subheading
+    QLabel *subheadingLabel = new QLabel("Get where u need to go");
+    subheadingLabel->setStyleSheet(
+        "background: transparent;"
+        "color: #4B5563;"
+        "font-size: 15px;"
+        "font-weight: 400;"
+        "font-family: 'Inter', 'Segoe UI', Arial, sans-serif;"
+        "border: none;"
+        "padding: 0px;"
+        "margin-top: 2px;"
+    );
+    
+    cardLayout->addWidget(headingLabel);
+    cardLayout->addWidget(subheadingLabel);
+    cardLayout->addSpacing(10);
+    
+    // Section title: YOUR CURRENT LOCATION
+    QLabel *sectionTitle = new QLabel("YOUR CURRENT LOCATION");
+    sectionTitle->setStyleSheet(
+        "background: transparent;"
+        "color: #000000;"
+        "font-size: 13px;"
+        "font-weight: 700;"
+        "font-family: 'Inter', 'Segoe UI', Arial, sans-serif;"
+        "letter-spacing: 0.5px;"
+        "border: none;"
+        "padding: 0px;"
+    );
+    cardLayout->addWidget(sectionTitle);
+    
+    // Current location detected box
+    QWidget *locDetectedBox = new QWidget();
+    locDetectedBox->setStyleSheet(
+        "QWidget {"
+        "  background: #F0FBF7;"
+        "  border: none;"
+        "  border-radius: 10px;"
+        "  padding: 12px 16px;"
+        "}"
+    );
+    // Match box width and ensure it sits within page margins
+    locDetectedBox->setFixedWidth(540);
+    locDetectedBox->setMinimumHeight(55);
+    locDetectedBox->setMaximumHeight(55);
+    
+    QHBoxLayout *locBoxLayout = new QHBoxLayout(locDetectedBox);
+    locBoxLayout->setContentsMargins(0, 0, 0, 0);
+    locBoxLayout->setSpacing(14);
+    
+    // Location pin icon (custom image)
+    QLabel *pinIcon = new QLabel();
+    QString pinIconPath = ResourceManager::getResourcePath("map-marker-icon-png.png");
+    QPixmap pinPixmap(pinIconPath);
+    if (!pinPixmap.isNull()) {
+        pinIcon->setPixmap(pinPixmap.scaled(48, 48, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    }
+    pinIcon->setStyleSheet(
+        "background: transparent;"
+        "border: none;"
+        "padding: 0px;"
+    );
+    pinIcon->setFixedSize(48, 48);
+    
+    // Text label
+    QLabel *locDetectedLabel = new QLabel("Current location detected");
+    locDetectedLabel->setStyleSheet(
+        "background: transparent;"
+        "color: #000000;"
+        "font-size: 18px;"
+        "font-weight: 500;"
+        "font-family: 'Inter', 'Segoe UI', Arial, sans-serif;"
+        "border: none;"
+        "padding: 0px;"
+    );
+    
+    locBoxLayout->addWidget(pinIcon, 0, Qt::AlignLeft);
+    locBoxLayout->addWidget(locDetectedLabel, 1);
+    
+    // Add horizontal layout with left spacing for indentation
+    QHBoxLayout *boxWrapperLayout = new QHBoxLayout();
+    boxWrapperLayout->setContentsMargins(40, 0, 0, 0);
+    boxWrapperLayout->addWidget(locDetectedBox, 0, Qt::AlignLeft);
+    
+    cardLayout->addSpacing(6);
+    cardLayout->addLayout(boxWrapperLayout);
+    
+    // Map image container with overlays
+    QWidget *mapContainer = new QWidget();
+    mapContainer->setFixedSize(540, 280);
+    mapContainer->setStyleSheet("background: transparent; border: none;");
     
     // Map image
-    QLabel *mapImage = new QLabel();
-    this->mapImage = mapImage;
-    mapImage->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    mapImage->setAttribute(Qt::WA_Hover);
-    mapImage->installEventFilter(this);
-    mapImage->setCursor(Qt::PointingHandCursor);
-    mapImage->setStyleSheet(
-        "border: none;"
-        "background: transparent;"
-        "border-radius: 14px;"
+    QLabel *mapImageLabel = new QLabel(mapContainer);
+    QString mapImgPath = ResourceManager::getResourcePath("Group23.png");
+    QPixmap mapPixmap(mapImgPath);
+    mapImageLabel->setGeometry(0, 0, 540, 280);
+    mapImageLabel->setStyleSheet(
+        "QLabel {"
+        "  background: #E0E0E0;"
+        "  border: 2px solid #E8F7F2;"
+        "  border-radius: 20px;"
+        "  padding: 0px;"
+        "  margin: 0px;"
+        "}"
     );
-    mapImage->setProperty("clickable", "map");
-    
-    QString mapPath = ResourceManager::getResourcePath("Group23.png");
-    
-    if (!mapPath.isEmpty()) {
-        QPixmap mapPixmap(mapPath);
-        if (!mapPixmap.isNull()) {
-            mapImage->setPixmap(mapPixmap);
-            mapImage->setScaledContents(true);
-        }
-    } else {
-        mapImage->setText("🗺️ Map Preview");
-        mapImage->setStyleSheet(
-            "color: #666;"
-            "font-size: 18px;"
-            "background: #F5F5F5;"
-            "border: none;"
-            "border-radius: 14px;"
-        );
+    mapImageLabel->setScaledContents(true);
+    if (!mapPixmap.isNull()) {
+        mapImageLabel->setPixmap(mapPixmap);
     }
     
-    // Expand icon overlay
-    QLabel *expandIcon = new QLabel(mapCard);
-    expandIcon->setText("⛶");
-    expandIcon->setStyleSheet(
-        "background: rgba(255,255,255,0.9);"
-        "color: #2E7D32;"
-        "border: 1px solid rgba(46,125,50,0.2);"
-        "border-radius: 8px;"
-        "padding: 8px;"
-        "font-size: 16px;"
+    // Location info overlay box on bottom of map (default visible)
+    QWidget *mapLocationBox = new QWidget(mapContainer);
+    mapLocationBox->setGeometry(20, 200, 500, 60);
+    mapLocationBox->setStyleSheet(
+        "QWidget {"
+        "  background: #F0FBF7;"
+        "  border: none;"
+        "  border-radius: 10px;"
+        "  padding: 8px 12px;"
+        "}"
     );
-    expandIcon->setFixedSize(36, 36);
-    expandIcon->move(mapCard->width() - 50, mapCard->height() - 50);
-    expandIcon->raise();
     
-    mapCardLayout->addWidget(mapImage);
+    QHBoxLayout *mapLocBoxLayout = new QHBoxLayout(mapLocationBox);
+    mapLocBoxLayout->setContentsMargins(0, 0, 0, 0);
+    mapLocBoxLayout->setSpacing(12);
     
-    mainLayout->addWidget(mapCard);
+    // Location pin icon in overlay
+    QLabel *mapPinIcon = new QLabel();
+    QString mapPinIconPath = ResourceManager::getResourcePath("map-marker-icon-png.png");
+    QPixmap mapPinPixmap(mapPinIconPath);
+    if (!mapPinPixmap.isNull()) {
+        mapPinIcon->setPixmap(mapPinPixmap.scaled(40, 40, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    }
+    mapPinIcon->setStyleSheet("background: transparent; border: none; padding: 0px;");
+    mapPinIcon->setFixedSize(40, 40);
+    
+    // Location text in overlay (will update dynamically)
+    QLabel *mapLocationLabel = new QLabel(locationId);
+    mapLocationLabel->setObjectName("mapLocationLabel");
+    mapLocationLabel->setStyleSheet(
+        "background: transparent;"
+        "color: #000000;"
+        "font-size: 15px;"
+        "font-weight: 500;"
+        "font-family: 'Inter', 'Segoe UI', Arial, sans-serif;"
+        "border: none;"
+        "padding: 0px;"
+    );
+    
+    mapLocBoxLayout->addWidget(mapPinIcon, 0, Qt::AlignLeft);
+    mapLocBoxLayout->addWidget(mapLocationLabel, 1);
+    
+    // Hover button overlay (initially hidden)
+    QPushButton *mapHoverButton = new QPushButton("See current location on map", mapContainer);
+    mapHoverButton->setGeometry(140, 110, 260, 60);
+    mapHoverButton->setStyleSheet(
+        "QPushButton {"
+        "  background: qlineargradient(x1:0, y1:0, x2:0, y2:1, "
+        "    stop:0 #00A86B, stop:1 #00925E);"
+        "  color: #FFFFFF;"
+        "  border: none;"
+        "  border-radius: 10px;"
+        "  padding: 8px 16px;"
+        "  font-size: 15px;"
+        "  font-weight: 600;"
+        "  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;"
+        "  letter-spacing: 0.5px;"
+        "}"
+        "QPushButton:hover {"
+        "  background: qlineargradient(x1:0, y1:0, x2:0, y2:1, "
+        "    stop:0 #00BA7A, stop:1 #00A86B);"
+        "}"
+        "QPushButton:pressed {"
+        "  background: qlineargradient(x1:0, y1:0, x2:0, y2:1, "
+        "    stop:0 #00925E, stop:1 #007A4D);"
+        "}"
+    );
+    mapHoverButton->setCursor(Qt::PointingHandCursor);
+    mapHoverButton->hide();
+    connect(mapHoverButton, &QPushButton::clicked, this, &RiderWindow::showMapDialog);
+    
+    // Enable hover events on map container
+    mapContainer->setAttribute(Qt::WA_Hover);
+    mapContainer->installEventFilter(this);
+    mapContainer->setProperty("clickable", "mapContainer");
+    
+    // Store pointers for updates
+    this->mapLocationOverlay = mapLocationLabel;
+    this->mapLocationBox = mapLocationBox;
+    this->mapHoverButton = mapHoverButton;
+    
+    // Wrapper for map container with same left spacing
+    QHBoxLayout *mapWrapperLayout = new QHBoxLayout();
+    mapWrapperLayout->setContentsMargins(40, 0, 0, 0);
+    mapWrapperLayout->addWidget(mapContainer, 0, Qt::AlignLeft);
+    
+    cardLayout->addSpacing(12);
+    cardLayout->addLayout(mapWrapperLayout);
+    
+    // Add stretch to keep content at top
+    cardLayout->addStretch();
+    
+    mainLayout->addWidget(bookRideCard);
+    
+    // Initialize currentLocationLabel as nullptr since it's removed from UI
+    currentLocationLabel = nullptr;
     
     // ===== SECTION 3: Destination Selection =====
     QWidget *pickupSection = new QWidget();
@@ -631,16 +730,25 @@ QWidget* RiderWindow::createBookRidePage()
     pickFromMapBtn->setMinimumHeight(38);
     pickFromMapBtn->setStyleSheet(
         "QPushButton {"
-        "  background: #7e57c2;"
-        "  color: white;"
-        "  border: none;"
+        "  background: #FFFFFF;"
+        "  color: #00A86B;"
+        "  border: 2px solid #E8F7F2;"
         "  border-radius: 10px;"
-        "  padding: 10px 16px;"
-        "  font-weight: 600;"
+        "  padding: 8px 16px;"
         "  font-size: 14px;"
+        "  font-weight: 600;"
+        "  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;"
+        "  letter-spacing: 0.3px;"
         "}"
-        "QPushButton:hover { background: #6a46b0; }"
-        "QPushButton:pressed { background: #5c3c9c; }"
+        "QPushButton:hover {"
+        "  background: qlineargradient(x1:0, y1:0, x2:0, y2:1, "
+        "    stop:0 #F0FBF7, stop:1 #E8F7F2);"
+        "  border: 2px solid #00A86B;"
+        "}"
+        "QPushButton:pressed {"
+        "  background: #E0F5ED;"
+        "  border: 2px solid #00925E;"
+        "}"
     );
     connect(pickFromMapBtn, &QPushButton::clicked, this, &RiderWindow::onPickFromMapClicked);
     destLayout->addWidget(pickFromMapBtn);
@@ -673,22 +781,26 @@ QWidget* RiderWindow::createBookRidePage()
     requestRideButton->setStyleSheet(
         "QPushButton {"
         "  background: qlineargradient(x1:0, y1:0, x2:0, y2:1, "
-        "    stop:0 #4CAF50, stop:1 #2e7d32);"
-        "  color: white;"
+        "    stop:0 #00A86B, stop:1 #00925E);"
+        "  color: #FFFFFF;"
         "  border: none;"
-        "  border-radius: 12px;"
-        "  padding: 18px 20px;"
+        "  border-radius: 10px;"
+        "  padding: 16px 20px;"
         "  font-size: 17px;"
         "  font-weight: 700;"
+        "  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;"
         "  letter-spacing: 0.5px;"
+        "  box-shadow: 0 4px 12px rgba(0, 168, 107, 0.25);"
         "}"
         "QPushButton:hover {"
         "  background: qlineargradient(x1:0, y1:0, x2:0, y2:1, "
-        "    stop:0 #66BB6A, stop:1 #388E3C);"
+        "    stop:0 #00BA7A, stop:1 #00A86B);"
+        "  box-shadow: 0 6px 16px rgba(0, 168, 107, 0.35);"
         "}"
         "QPushButton:pressed {"
         "  background: qlineargradient(x1:0, y1:0, x2:0, y2:1, "
-        "    stop:0 #2E7D32, stop:1 #1B5E20);"
+        "    stop:0 #00925E, stop:1 #007A4D);"
+        "  box-shadow: 0 2px 8px rgba(0, 168, 107, 0.2);"
         "}"
     );
     connect(requestRideButton, &QPushButton::clicked, this, &RiderWindow::onRequestRideClicked);
@@ -696,13 +808,13 @@ QWidget* RiderWindow::createBookRidePage()
 
     // ===== Trip Status Panel =====
     QWidget *tripStatusPanel = new QWidget();
-    tripStatusPanel->setMinimumHeight(80);
+    tripStatusPanel->setMinimumHeight(180);
     tripStatusPanel->setStyleSheet(
-        "background: qlineargradient(x1:0, y1:0, x2:1, y2:1, "
-        "  stop:0 rgba(76,175,80,0.08), stop:1 rgba(46,125,50,0.05));"
-        "border: 1px solid rgba(46,125,50,0.2);"
-        "border-radius: 12px;"
-        "padding: 16px 18px;"
+        "background: #FFFFFF;"
+        "border: 2px solid #00A86B;"
+        "border-radius: 16px;"
+        "padding: 20px 22px;"
+        "box-shadow: 0 4px 16px rgba(0,168,107,0.07);"
     );
     QVBoxLayout *tripLayout = new QVBoxLayout(tripStatusPanel);
     tripLayout->setContentsMargins(0,0,0,0);
@@ -710,85 +822,82 @@ QWidget* RiderWindow::createBookRidePage()
 
     tripStatusLabel = new QLabel("No active trip");
     tripStatusLabel->setStyleSheet(
-        "color: #1B5E20; "
-        "font-size: 16px; "
-        "font-weight: 600;"
+        "color: #00A86B; "
+        "font-size: 17px; "
+        "font-weight: 700;"
+        "font-family: 'Inter', 'Segoe UI', Arial, sans-serif;"
+        "letter-spacing: 0.2px;"
     );
     driverStatusLabel = new QLabel("");
     driverStatusLabel->setStyleSheet(
-        "color: #2E7D32; "
-        "font-size: 14px; "
+        "color: #00925E; "
+        "font-size: 15px; "
         "font-weight: 500;"
+        "font-family: 'Inter', 'Segoe UI', Arial, sans-serif;"
     );
 
     tripLayout->addWidget(tripStatusLabel);
     tripLayout->addWidget(driverStatusLabel);
-    
+
     // Cancel ride button (initially hidden)
     cancelRideButton = new QPushButton("🚫 Cancel Ride");
     cancelRideButton->setStyleSheet(
         "QPushButton {"
-        "  background: qlineargradient(x1:0, y1:0, x2:0, y2:1, "
-        "    stop:0 rgba(244,67,54,0.8), stop:1 rgba(211,47,47,0.7));"
-        "  color: white;"
-        "  border: none;"
+        "  background: #FFF0F0;"
+        "  color: #D32F2F;"
+        "  border: 2px solid #D32F2F;"
         "  border-radius: 8px;"
         "  font-size: 14px;"
-        "  font-weight: bold;"
+        "  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;"
+        "  font-weight: 600;"
         "  padding: 8px 16px;"
         "  margin-top: 8px;"
+        "  transition: background 0.2s;"
         "}"
         "QPushButton:hover {"
-        "  background: qlineargradient(x1:0, y1:0, x2:0, y2:1, "
-        "    stop:0 rgba(229,57,53,0.9), stop:1 rgba(198,40,40,0.8));"
+        "  background: #FFD6D6;"
+        "  color: #B71C1C;"
+        "  border: 2px solid #B71C1C;"
         "}"
         "QPushButton:pressed {"
-        "  background: qlineargradient(x1:0, y1:0, x2:0, y2:1, "
-        "    stop:0 rgba(211,47,47,1.0), stop:1 rgba(183,28,28,0.9));"
+        "  background: #FFEBEE;"
+        "  color: #B71C1C;"
+        "  border: 2px solid #B71C1C;"
         "}"
     );
     cancelRideButton->setCursor(Qt::PointingHandCursor);
     cancelRideButton->setVisible(false);  // Hidden by default
     connect(cancelRideButton, &QPushButton::clicked, this, [this]() {
         if (!dispatchEngine) return;
-        
         Trip *trip = dispatchEngine->getTrip(currentTripId);
         if (!trip) return;
-        
         TripState state = trip->getState();
         if (state != PICKUP_IN_PROGRESS) {
             QMessageBox::warning(this, "Cannot Cancel", 
                 "Ride can only be cancelled while driver is enroute to pickup.");
             return;
         }
-        
         QMessageBox::StandardButton reply = QMessageBox::question(this, "Cancel Ride",
             "Are you sure you want to cancel this ride?\n\nDriver is currently on the way to pick you up.",
             QMessageBox::Yes | QMessageBox::No);
-        
         if (reply == QMessageBox::Yes) {
             // Cancel the trip
             dispatchEngine->cancelTrip(currentTripId);
-            
             // Add to history as cancelled
             QString pickup = QString::fromUtf8(trip->getPickupNodeId());
             QString dropoff = QString::fromUtf8(trip->getDropoffNodeId());
             double fare = trip->calculateTotalFare();
             double distance = trip->getRideDistance();
             int driverId = trip->getDriverId();
-            
             addTripToHistory(currentTripId, pickup, dropoff, "CANCELLED", fare, distance, driverId);
             refreshHistoryPage();
-            
             // Stop trip timer and update UI
             if (tripTimer->isActive()) {
                 tripTimer->stop();
             }
-            
             tripStatusLabel->setText("No active trip");
             driverStatusLabel->setText("");
             cancelRideButton->setVisible(false);
-            
             // Reset destination
             this->destPlaceholder->setText("Where do you wanna go?");
             this->destPlaceholder->setStyleSheet(
@@ -800,13 +909,12 @@ QWidget* RiderWindow::createBookRidePage()
             );
             dropoffNodeId = "";
             rejectedDriverIds.clear();
-            
             QMessageBox::information(this, "Ride Cancelled", 
                 "Your ride has been cancelled. The driver has been notified.");
         }
     });
     tripLayout->addWidget(cancelRideButton);
-    
+
     mainLayout->addWidget(tripStatusPanel);
     mainLayout->addStretch();
     
@@ -1000,9 +1108,10 @@ QWidget* RiderWindow::createHistoryPage()
     // Title
     QLabel *titleLabel = new QLabel("Trip History");
     titleLabel->setStyleSheet(
-        "color: #1B5E20;"
+        "color: #000000;"
         "font-size: 28px;"
         "font-weight: 700;"
+        "font-family: 'Inter', 'Segoe UI', Arial, sans-serif;"
         "letter-spacing: 0.5px;"
     );
     titleLabel->setAlignment(Qt::AlignLeft);
@@ -1013,21 +1122,21 @@ QWidget* RiderWindow::createHistoryPage()
     scrollArea->setWidgetResizable(true);
     scrollArea->setStyleSheet(
         "QScrollArea {"
-        "  background: transparent;"
+        "  background: #FFFFFF;"
         "  border: none;"
         "}"
         "QScrollBar:vertical {"
-        "  background: rgba(255,255,255,0.3);"
+        "  background: #F0FBF7;"
         "  width: 10px;"
         "  border-radius: 5px;"
         "}"
         "QScrollBar::handle:vertical {"
-        "  background: rgba(76,175,80,0.5);"
+        "  background: #00A86B;"
         "  border-radius: 5px;"
         "  min-height: 20px;"
         "}"
         "QScrollBar::handle:vertical:hover {"
-        "  background: rgba(76,175,80,0.7);"
+        "  background: #00925E;"
         "}"
     );
     
@@ -1042,9 +1151,10 @@ QWidget* RiderWindow::createHistoryPage()
     {
         QLabel *emptyLabel = new QLabel("No trip history yet");
         emptyLabel->setStyleSheet(
-            "color: rgba(46,125,50,0.6);"
+            "color: #00A86B;"
             "font-size: 18px;"
             "font-weight: 500;"
+            "font-family: 'Inter', 'Segoe UI', Arial, sans-serif;"
             "padding: 40px;"
         );
         emptyLabel->setAlignment(Qt::AlignCenter);
@@ -1060,10 +1170,10 @@ QWidget* RiderWindow::createHistoryPage()
             QWidget *tripCard = new QWidget();
             tripCard->setStyleSheet(
                 "QWidget {"
-                "  background: qlineargradient(x1:0, y1:0, x2:0, y2:1, "
-                "    stop:0 rgba(255,255,255,0.95), stop:1 rgba(255,255,255,0.85));"
-                "  border: 1px solid rgba(76,175,80,0.2);"
-                "  border-radius: 12px;"
+                "  background: #FFFFFF;"
+                "  border: 2px solid #00A86B;"
+                "  border-radius: 16px;"
+                "  box-shadow: 0 2px 8px rgba(0,168,107,0.07);"
                 "}"
             );
             
@@ -1075,20 +1185,26 @@ QWidget* RiderWindow::createHistoryPage()
             QHBoxLayout *headerLayout = new QHBoxLayout();
             QLabel *tripIdLabel = new QLabel(QString("Trip #%1").arg(record.tripId));
             tripIdLabel->setStyleSheet(
-                "color: #1B5E20;"
+                "color: #000000;"
                 "font-size: 16px;"
                 "font-weight: 700;"
+                "font-family: 'Inter', 'Segoe UI', Arial, sans-serif;"
+                "border: none;"
+                "background: transparent;"
             );
             
             QLabel *statusLabel = new QLabel(QString::fromStdString(record.status));
-            QString statusColor = (record.status == "COMPLETED") ? "#4CAF50" : "#F44336";
+            QString statusColor = (record.status == "COMPLETED") ? "#00A86B" : "#F44336";
             statusLabel->setStyleSheet(QString(
-                "color: white;"
+                "color: #FFFFFF;"
                 "background: %1;"
                 "font-size: 12px;"
                 "font-weight: 600;"
+                "font-family: 'Inter', 'Segoe UI', Arial, sans-serif;"
                 "padding: 5px 12px;"
                 "border-radius: 10px;"
+                "border: none;"
+                "box-shadow: none;"
             ).arg(statusColor));
             
             headerLayout->addWidget(tripIdLabel);
@@ -1103,9 +1219,12 @@ QWidget* RiderWindow::createHistoryPage()
             ).arg(QString::fromStdString(record.pickupNode))
              .arg(QString::fromStdString(record.dropoffNode)));
             routeLabel->setStyleSheet(
-                "color: #424242;"
+                "color: #222222;"
                 "font-size: 13px;"
+                "font-family: 'Inter', 'Segoe UI', Arial, sans-serif;"
                 "line-height: 1.6;"
+                "border: none;"
+                "background: transparent;"
             );
             cardLayout->addWidget(routeLabel);
             
@@ -1116,18 +1235,24 @@ QWidget* RiderWindow::createHistoryPage()
              .arg(record.distance, 0, 'f', 0)
              .arg(record.fare, 0, 'f', 2));
             detailsLabel->setStyleSheet(
-                "color: #757575;"
+                "color: #00925E;"
                 "font-size: 12px;"
                 "font-weight: 500;"
+                "font-family: 'Inter', 'Segoe UI', Arial, sans-serif;"
+                "border: none;"
+                "background: transparent;"
             );
             cardLayout->addWidget(detailsLabel);
             
             // Timestamp
             QLabel *timeLabel = new QLabel(QString("🕒 %1").arg(QString::fromStdString(record.timestamp)));
             timeLabel->setStyleSheet(
-                "color: #9E9E9E;"
+                "color: #BDBDBD;"
                 "font-size: 11px;"
                 "font-style: italic;"
+                "font-family: 'Inter', 'Segoe UI', Arial, sans-serif;"
+                "border: none;"
+                "background: transparent;"
             );
             cardLayout->addWidget(timeLabel);
             
@@ -1147,6 +1272,19 @@ QWidget* RiderWindow::createHistoryPage()
 
 bool RiderWindow::eventFilter(QObject *obj, QEvent *event)
 {
+    // Handle map container hover
+    if (obj->property("clickable").toString() == "mapContainer") {
+        if (event->type() == QEvent::HoverEnter || event->type() == QEvent::Enter) {
+            if (mapLocationBox) mapLocationBox->hide();
+            if (mapHoverButton) mapHoverButton->show();
+            return true;
+        } else if (event->type() == QEvent::HoverLeave || event->type() == QEvent::Leave) {
+            if (mapHoverButton) mapHoverButton->hide();
+            if (mapLocationBox) mapLocationBox->show();
+            return true;
+        }
+    }
+    
     // Handle mouse clicks on map and destination input
     if (event->type() == QEvent::MouseButtonPress) {
         QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
@@ -2096,6 +2234,19 @@ void RiderWindow::updateCurrentLocationUI()
                 "padding: 10px 12px;"
                 "border: 1px solid rgba(76,175,80,0.2);"
             );
+        }
+    }
+    
+    // Update map overlay location as well
+    if (mapLocationOverlay)
+    {
+        if (locationId.isEmpty())
+        {
+            mapLocationOverlay->setText("Location not set");
+        }
+        else
+        {
+            mapLocationOverlay->setText(locationId);
         }
     }
 }

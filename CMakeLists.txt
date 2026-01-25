@@ -61,6 +61,7 @@ set(RESOURCE_FILES
     "${CMAKE_SOURCE_DIR}/user1.png"
     "${CMAKE_SOURCE_DIR}/Mask_group.png"
     "${CMAKE_SOURCE_DIR}/Group23.png"
+    "${CMAKE_SOURCE_DIR}/map-marker-icon-png.png"
     "${CMAKE_SOURCE_DIR}/preloader_ride_sharing_system.mp4"
 )
 
