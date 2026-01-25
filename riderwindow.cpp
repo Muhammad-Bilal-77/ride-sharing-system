@@ -1,4 +1,5 @@
 ﻿#include "riderwindow.h"
+#include "resourcemanager.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QWidget>
@@ -193,19 +194,10 @@ void RiderWindow::setupUI()
         "padding: 2px;"
     );
     
-    // Load user profile image
-    QString imgPath = QCoreApplication::applicationDirPath() + "/user1.png";
-    QFileInfo imgInfo(imgPath);
+    // Load user profile image using portable resource manager
+    QString imgPath = ResourceManager::getResourcePath("user1.png");
     
-    if (!imgInfo.exists()) {
-        QDir exeDir(QCoreApplication::applicationDirPath());
-        exeDir.cdUp();
-        exeDir.cdUp();
-        imgPath = exeDir.absoluteFilePath("user1.png");
-        imgInfo.setFile(imgPath);
-    }
-    
-    if (imgInfo.exists()) {
+    if (!imgPath.isEmpty()) {
         QPixmap pixmap(imgPath);
         if (!pixmap.isNull()) {
             // Create rounded pixmap
@@ -544,18 +536,9 @@ QWidget* RiderWindow::createBookRidePage()
     );
     mapImage->setProperty("clickable", "map");
     
-    QString mapPath = QCoreApplication::applicationDirPath() + "/Group23.png";
-    QFileInfo mapInfo(mapPath);
+    QString mapPath = ResourceManager::getResourcePath("Group23.png");
     
-    if (!mapInfo.exists()) {
-        QDir exeDir(QCoreApplication::applicationDirPath());
-        exeDir.cdUp();
-        exeDir.cdUp();
-        mapPath = exeDir.absoluteFilePath("Group23.png");
-        mapInfo.setFile(mapPath);
-    }
-    
-    if (mapInfo.exists()) {
+    if (!mapPath.isEmpty()) {
         QPixmap mapPixmap(mapPath);
         if (!mapPixmap.isNull()) {
             mapImage->setPixmap(mapPixmap);

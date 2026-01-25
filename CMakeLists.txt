@@ -53,6 +53,31 @@ endif()
 
 target_link_libraries(RideSharingSystem PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Multimedia Qt${QT_VERSION_MAJOR}::MultimediaWidgets)
 
+# ============ RESOURCE FILES COPYING ============
+# Copy all resource files (images and videos) to build output directory
+# This makes the app portable - resources are located relative to the executable
+
+set(RESOURCE_FILES
+    "${CMAKE_SOURCE_DIR}/user1.png"
+    "${CMAKE_SOURCE_DIR}/Mask_group.png"
+    "${CMAKE_SOURCE_DIR}/Group23.png"
+    "${CMAKE_SOURCE_DIR}/preloader_ride_sharing_system.mp4"
+)
+
+# Copy resources to the build directory for development/testing
+foreach(RESOURCE_FILE ${RESOURCE_FILES})
+    if(EXISTS ${RESOURCE_FILE})
+        add_custom_command(TARGET RideSharingSystem POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy
+            ${RESOURCE_FILE}
+            $<TARGET_FILE_DIR:RideSharingSystem>/
+            COMMENT "Copying resource: ${RESOURCE_FILE}"
+        )
+    endif()
+endforeach()
+
+# ============ END RESOURCE FILES COPYING ============
+
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an
 # explicit, fixed bundle identifier manually though.

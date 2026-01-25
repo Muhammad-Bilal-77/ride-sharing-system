@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include "resourcemanager.h"
 
 #include <QApplication>
 #include <QWidget>
@@ -51,23 +52,16 @@ int main(int argc, char *argv[])
     player->setAudioOutput(audioOutput);
     player->setVideoOutput(videoWidget);
     
-    // Get absolute path to video file (check multiple locations)
-    QString videoPath = "C:/Users/hp/Documents/RideSharingSystem/preloader_ride_sharing_system.mp4";
-    QFileInfo checkFile(videoPath);
+    // Get absolute path to video file using portable resource manager
+    QString videoPath = ResourceManager::getResourcePath("preloader_ride_sharing_system.mp4");
     
-    if (!checkFile.exists()) {
-        // Try relative path
-        videoPath = QDir::currentPath() + "/preloader_ride_sharing_system.mp4";
-        checkFile.setFile(videoPath);
-    }
-    
-    if (checkFile.exists() && checkFile.isFile()) {
+    if (!videoPath.isEmpty()) {
         qDebug() << "Video file found at:" << videoPath;
         player->setSource(QUrl::fromLocalFile(videoPath));
     } else {
         qDebug() << "Video file NOT found!";
-        qDebug() << "Checked:" << videoPath;
         qDebug() << "Current directory:" << QDir::currentPath();
+        qDebug() << "Application directory:" << QCoreApplication::applicationDirPath();
     }
     
     // Connect error handling

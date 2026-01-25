@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
+#include "resourcemanager.h"
 
 #include <QDir>
 #include <QFileInfo>
@@ -201,33 +202,22 @@ MainWindow::MainWindow(QWidget *parent)
     imageLabel = new QLabel();
     imageLabel->setAlignment(Qt::AlignCenter);
     
-    // Load image
-    QString imgPath = QCoreApplication::applicationDirPath() + "/Maskgroup.png";
-    QFileInfo imgInfo(imgPath);
+    // Load image using portable resource manager
+    QString imgPath = ResourceManager::getResourcePath("Mask_group.png");
     
-    if (!imgInfo.exists()) {
-        QDir exeDir(QCoreApplication::applicationDirPath());
-        exeDir.cdUp();
-        exeDir.cdUp();
-        imgPath = exeDir.absoluteFilePath("Maskgroup.png");
-        imgInfo.setFile(imgPath);
-    }
-    
-    qDebug() << "Loading image from:" << imgPath << "Exists:" << imgInfo.exists();
-    
-    if (imgInfo.exists()) {
+    if (!imgPath.isEmpty()) {
         QPixmap pixmap(imgPath);
         if (!pixmap.isNull()) {
             imageLabel->setPixmap(pixmap.scaled(500, 400, Qt::KeepAspectRatio, Qt::SmoothTransformation));
-            qDebug() << "Image loaded successfully, size:" << pixmap.size();
+            qDebug() << "Image loaded successfully from:" << imgPath << "size:" << pixmap.size();
         } else {
             imageLabel->setText("Failed to load image");
-            qDebug() << "Failed to load pixmap";
+            qDebug() << "Failed to load pixmap from:" << imgPath;
         }
     } else {
         imageLabel->setText("Image not found");
         imageLabel->setStyleSheet("color: red; font-size: 18px;");
-        qDebug() << "Image file not found";
+        qDebug() << "Image file not found: Mask_group.png";
     }
 
     // Add to content layout with equal spacing
