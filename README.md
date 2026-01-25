@@ -2,11 +2,13 @@
 
 A comprehensive C++ ride-sharing system with real-time routing, payment calculation, and rollback capabilities.
 
+
 ## 📋 Table of Contents
 - [Overview](#overview)
 - [System Architecture](#system-architecture)
 - [Key Features](#key-features)
 - [Component Documentation](#component-documentation)
+- [Frontend/UI Flow & Screens](FRONTEND_UI_FLOW_README.md)
 - [Getting Started](#getting-started)
 - [Usage Examples](#usage-examples)
 - [Technical Specifications](#technical-specifications)
@@ -101,6 +103,7 @@ This ride-sharing system implements a complete trip management solution with:
 
 ---
 
+
 ## 📚 Component Documentation
 
 Detailed documentation for each component:
@@ -114,6 +117,7 @@ Detailed documentation for each component:
 | Dispatch Engine | [README_DISPATCHENGINE.md](core/README_DISPATCHENGINE.md) | Business logic, policies, nearest driver |
 | Rollback Manager | [README_ROLLBACKMANAGER.md](core/README_ROLLBACKMANAGER.md) | State snapshots, operation reversal |
 | RideShare System | [README_RIDESHARESYSTEM.md](core/README_RIDESHARESYSTEM.md) | Main API, system facade |
+| Frontend/UI Flow | [FRONTEND_UI_FLOW_README.md](FRONTEND_UI_FLOW_README.md) | In-depth UI/UX, navigation, and screen documentation |
 
 ---
 
