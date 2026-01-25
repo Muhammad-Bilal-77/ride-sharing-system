@@ -340,5 +340,7 @@ Developed as a comprehensive ride-sharing system demonstration showcasing:
 - Rollback mechanisms
 
 ---
+## App download:
+https://drive.google.com/file/d/1vGCv1SvkXcNHleOnOMxdi0MdpU_rXnp7/view?usp=sharing
 
 **Last Updated**: January 21, 2026
