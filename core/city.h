@@ -11,7 +11,7 @@ const int MAX_STRING_LENGTH = 256;
 struct PathResult
 {
     double totalDistance;                    // Shortest path cost; -1 if no path or overflow
-    char path[100][MAX_STRING_LENGTH];       // Ordered sequence of node IDs
+    char path[500][MAX_STRING_LENGTH];       // Ordered sequence of node IDs (increased to support long cross-zone trips)
     int pathLength;                          // Number of nodes in path
     PathResult() : totalDistance(-1.0), pathLength(0) {}
 };

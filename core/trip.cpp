@@ -83,6 +83,12 @@ double Trip::getTotalDistance() const
     return total;
 }
 
+double Trip::getRideDistance() const
+{
+    // Only the rider's in-vehicle distance (pickup -> dropoff)
+    return pickupToDropoffPath.totalDistance > 0 ? pickupToDropoffPath.totalDistance : 0.0;
+}
+
 int Trip::getCurrentPathIndex() const
 {
     return currentPathIndex;
@@ -258,9 +264,10 @@ void Trip::extractZone(const char *nodeId, char *zone, int maxLen)
 // Total distance = driver to pickup + pickup to dropoff
 double Trip::calculateBaseFare() const
 {
-    double totalDistance = getTotalDistance();
+    // Base fare should be calculated on the rider's actual trip distance only
+    double rideDistance = getRideDistance();
     // Rate: 150 rupees per 1000 meters = 0.15 rupees per meter
-    double baseFare = (totalDistance / 1000.0) * 150.0;
+    double baseFare = (rideDistance / 1000.0) * 150.0;
     return baseFare;
 }
 
@@ -270,7 +277,9 @@ double Trip::calculateZoneSurcharge() const
     char pickupZone[MAX_STRING_LENGTH] = {0};
     char dropoffZone[MAX_STRING_LENGTH] = {0};
     
-    extractZone(pickupNodeId, pickupZone, MAX_STRING_LENGTH);
+    // Prefer the resolved pickup node if available (e.g., nearest route node)
+    const char *pickupForZone = (effectivePickupNodeId[0] != '\0') ? effectivePickupNodeId : pickupNodeId;
+    extractZone(pickupForZone, pickupZone, MAX_STRING_LENGTH);
     extractZone(dropoffNodeId, dropoffZone, MAX_STRING_LENGTH);
     
     // If zones are different, add 100 rupees surcharge

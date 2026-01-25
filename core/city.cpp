@@ -784,7 +784,7 @@ PathResult City::findShortestPathAStar(const char *startNodeId, const char *endN
         return result;
     }
 
-    // Reconstruct path and check capacity (100 entries)
+    // Reconstruct path and check capacity (500 entries)
     int length = 0;
     for (int v = goalIndex; v != -1; v = parent[v])
     {
@@ -793,7 +793,7 @@ PathResult City::findShortestPathAStar(const char *startNodeId, const char *endN
             break;
     }
 
-    if (length > 100 || (parent[goalIndex] == -1 && goalIndex != startIndex))
+    if (length > 500 || (parent[goalIndex] == -1 && goalIndex != startIndex))
     {
         delete[] nodes;
         delete[] gScore;

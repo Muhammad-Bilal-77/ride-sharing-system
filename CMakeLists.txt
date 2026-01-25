@@ -10,7 +10,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Multimedia MultimediaWidgets)
 
 set(PROJECT_SOURCES
         main.cpp
@@ -23,6 +23,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(RideSharingSystem
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
+        riderwindow.h riderwindow.cpp
+        citymapview.h citymapview.cpp
         core/city.h core/city.cpp
         core/driver.h core/driver.cpp
         core/rider.h core/rider.cpp
@@ -49,7 +51,33 @@ else()
     endif()
 endif()
 
-target_link_libraries(RideSharingSystem PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+target_link_libraries(RideSharingSystem PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Multimedia Qt${QT_VERSION_MAJOR}::MultimediaWidgets)
+
+# ============ RESOURCE FILES COPYING ============
+# Copy all resource files (images and videos) to build output directory
+# This makes the app portable - resources are located relative to the executable
+
+set(RESOURCE_FILES
+    "${CMAKE_SOURCE_DIR}/user1.png"
+    "${CMAKE_SOURCE_DIR}/Mask_group.png"
+    "${CMAKE_SOURCE_DIR}/Group23.png"
+    "${CMAKE_SOURCE_DIR}/map-marker-icon-png.png"
+    "${CMAKE_SOURCE_DIR}/preloader_ride_sharing_system.mp4"
+)
+
+# Copy resources to the build directory for development/testing
+foreach(RESOURCE_FILE ${RESOURCE_FILES})
+    if(EXISTS ${RESOURCE_FILE})
+        add_custom_command(TARGET RideSharingSystem POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy
+            ${RESOURCE_FILE}
+            $<TARGET_FILE_DIR:RideSharingSystem>/
+            COMMENT "Copying resource: ${RESOURCE_FILE}"
+        )
+    endif()
+endforeach()
+
+# ============ END RESOURCE FILES COPYING ============
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an
